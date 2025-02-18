@@ -226,6 +226,7 @@ class OwnerController extends Controller
             'photo_right_side' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'is_group' => 'nullable|boolean',
             'group_count' => 'nullable|integer|min:1|required_if:is_group,true',
+            'is_vaccinated' => 'required|in:0,1,2', // Add validation for is_vaccinated
         ]);
     
         $animal = Animal::where('animal_id', $animal_id)->firstOrFail();
@@ -259,14 +260,14 @@ class OwnerController extends Controller
             'photo_left_side' => $photos['photo_left_side'],
             'photo_right_side' => $photos['photo_right_side'],
             'is_group' => $request->is_group,
-            'group_count' => $request->is_group ? $request->group_count : null,
+            'group_count' => $request->is_group ? $request->group_count : 1,
+            'is_vaccinated' => $request->is_vaccinated, // Add is_vaccinated here
         ]);
     
-       
-
-    return redirect()->route('owners.profile-owner', ['owner_id' => $owner_id])
-                     ->with('success', 'Animal and transaction updated successfully!');
-}
+        return redirect()->route('owners.profile-owner', ['owner_id' => $owner_id])
+                         ->with('success', 'Animal updated successfully!');
+    }
+    
 
 
 

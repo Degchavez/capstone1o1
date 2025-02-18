@@ -19,6 +19,17 @@
                         </select>
                     </div>
 
+                    <div>
+                        <label for="is_vaccinated" class="block text-sm font-medium text-gray-600">Vaccination Status</label>
+                        <select name="is_vaccinated" id="is_vaccinated" class="w-full p-2 border border-gray-300 rounded-md">
+                            <option value="" {{ old('is_vaccinated', $animal->is_vaccinated) === null ? 'selected' : '' }}>Select Vaccination Status</option>
+                            <option value="0" {{ old('is_vaccinated', $animal->is_vaccinated) == '0' ? 'selected' : '' }}>Not Vaccinated</option>
+                            <option value="1" {{ old('is_vaccinated', $animal->is_vaccinated) == '1' ? 'selected' : '' }}>Vaccinated</option>
+                            <option value="2" {{ old('is_vaccinated', $animal->is_vaccinated) == '2' ? 'selected' : '' }}>No Vaccination Required</option>
+                        </select>
+                    </div>
+                    
+
                     <!-- Group Count -->
                     <div id="group_count_field" class="{{ old('is_group', $animal->is_group) == 1 ? '' : 'hidden' }}">
                         <label for="group_count" class="block text-sm font-medium text-gray-600 dark:text-neutral-400">Group Count</label>
@@ -132,5 +143,24 @@
 
         document.addEventListener('DOMContentLoaded', toggleFields);
         document.getElementById('is_group').addEventListener('change', toggleFields);
+
+        // JavaScript for dynamic breed selection based on species
+        document.getElementById('species_id').addEventListener('change', function () {
+            const speciesId = this.value;
+
+            fetch(`/get-breedz/${speciesId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const breedSelect = document.getElementById('breed_id');
+                    breedSelect.innerHTML = '<option value="">Select a breed</option>';
+                    data.breeds.forEach(breed => {
+                        const option = document.createElement('option');
+                        option.value = breed.id;
+                        option.textContent = breed.name;
+                        breedSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching breeds:', error));
+        });
     </script>
 </x-app-layout>

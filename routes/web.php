@@ -6,6 +6,11 @@ use App\Http\Controllers\NewOwnerController;
 use App\Http\Controllers\ReController;
 use App\Http\Controllers\NewVaccineController;
 use App\Http\Controllers\NewBarangayController;
+use App\Http\Controllers\NewSpeciesController;
+use App\Http\Controllers\NewBreedController;
+use App\Http\Controllers\NewTransactionsController;
+use App\Http\Controllers\NewTransactionSubtypeController;
+use App\Http\Controllers\NewDesignationController;
 
 use App\Http\Controllers\TransactionsController;
 use App\Http\Controllers\VeterinaryTechnicianController;
@@ -29,7 +34,10 @@ use App\Livewire\EditUser;
 
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'welcome');
+Route::get('/', function () {
+    $veterinarians = \App\Models\User::where('role', 2)->get(); // Assuming role 2 identifies veterinarians
+    return view('welcome', compact('veterinarians'));
+});
 
 Route::middleware(['auth'])->get('/dashboard', function () {
     if (auth()->user()->role == 0) {
@@ -270,6 +278,12 @@ Route::get('/admin/subtypes', [TransactionSubtypeController::class, 'index'])->n
 Route::resource('designations', DesignationController::class);
 Route::get('/admin/designation', [DesignationController::class, 'index'])->name('designation.index');
 
+Route::put('/update-tech/{transaction_id}', [AdminController::class, 'updateTechnician'])->name('updateTech');
+
+Route::put('/admin/{transaction_id}/update-dets', [AdminController::class, 'updateDetails'])->name('update.dets');
+
+
+
 });
 
 Route::group(['middleware' => 'owner'], function () {
@@ -401,6 +415,27 @@ Route::resource('newbarangays', NewBarangayController::class);
 Route::get('/admin/newbarangays', [NewBarangayController::class, 'loadBarangays'])->name('newbarangay.load');
 Route::get('/newbarangays/create', [NewBarangayController::class, 'create'])->name('newcreate-barangay');
 Route::delete('/newbarangays/{barangay}', [NewBarangayController::class, 'destroy'])->name('destroy-barangay');
+
+Route::resource('newspecies', NewSpeciesController::class);
+Route::resource('newbreeds', NewBreedController::class);
+
+Route::get('/rec/newspecies', [NewSpeciesController::class, 'index'])->name('recspecies.breed');
+Route::put('/newspecies/{species}', [NewSpeciesController::class, 'update'])->name('newspecies.updates');
+Route::put('/newbreeds/{breeds}', [NewBreedController::class, 'update'])->name('newbreeds.updates');// Edit route
+Route::get('/newbreeds/{breed}/edit', [NewBreedController::class, 'edit'])->name('newbreeds.edits');
+    Route::put('/newbreeds/{breeds}', [NewBreedController::class, 'update'])->name('newbreeds.updates');
+
+
+    Route::resource('rec-subtypes', NewTransactionSubtypeController::class);
+    Route::get('/rec/subtypes', [NewTransactionSubtypeController::class, 'index'])->name('recsubtype.index');
+
+    Route::resource('recdesignations', NewDesignationController::class);
+    Route::get('/rec/designation', [NewDesignationController::class, 'index'])->name('recdesignation.index');
+
+    Route::get('/rec/settings', [ReController::class, 'settings'])->name('rec.settings');
+Route::post('/rec/set/change-password', [ReController::class, 'changePassword'])->name('rec.change-password');
+
+Route::get('rec/veterinarian/{user_id}', [ReController::class, 'showVeterinarianProfile'])->name('rec.veterinarian.profile');
 
 
 }); 

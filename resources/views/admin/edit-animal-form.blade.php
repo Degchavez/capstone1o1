@@ -46,14 +46,26 @@
                     </select>
                 </div>
 
-                <!-- Animal Name -->
                 <div>
+                    <label for="is_vaccinated" class="block text-sm font-medium text-gray-600">Vaccination Status</label>
+                    <select name="is_vaccinated" id="is_vaccinated" class="w-full p-2 border border-gray-300 rounded-md">
+                        <option value="" {{ old('is_vaccinated', $animal->is_vaccinated) === null ? 'selected' : '' }}>Select Vaccination Status</option>
+                        <option value="0" {{ old('is_vaccinated', $animal->is_vaccinated) == '0' ? 'selected' : '' }}>Not Vaccinated</option>
+                        <option value="1" {{ old('is_vaccinated', $animal->is_vaccinated) == '1' ? 'selected' : '' }}>Vaccinated</option>
+                        <option value="2" {{ old('is_vaccinated', $animal->is_vaccinated) == '2' ? 'selected' : '' }}>No Vaccination Required</option>
+                    </select>
+                </div>
+                
+
+                 <!-- Animal Name -->
+                 <div>
                     <label for="name" class="block text-sm font-medium text-gray-600">Animal Name</label>
                     <input type="text" name="name" id="name" value="{{ old('name', $animal->name) }}" class="w-full p-3 border border-gray-300 rounded-md">
                 </div>
 
+
                 <!-- Individual Animal Fields -->
-                <div id="individual-animal-fields">
+                <div id="individual-animal-fields" class="{{ $animal->is_group ? 'hidden' : '' }}">
                     <div>
                         <label for="gender" class="block text-sm font-medium text-gray-600">Gender</label>
                         <select name="gender" id="gender" class="w-full p-3 border border-gray-300 rounded-md">
@@ -94,39 +106,23 @@
                     </select>
                 </div>
 
+                <!-- Color -->
                 <div>
                     <label for="color" class="block text-sm font-medium text-gray-600">Color</label>
-                    <input type="text" name="color" id="color" value="{{ old('color', $animal->color ?? '') }}"
-                           class="w-full p-2 border border-gray-300 rounded-md">
+                    <input type="text" name="color" id="color" value="{{ old('color', $animal->color ?? '') }}" class="w-full p-2 border border-gray-300 rounded-md">
                 </div>
-                
 
+                <!-- Birth Date -->
                 <div>
                     <label for="birth_date" class="block text-sm font-medium text-gray-600">Birth Date</label>
-                    <input type="date" name="birth_date" id="birth_date" 
-                           value="{{ old('birth_date', optional($animal->birth_date)->format('Y-m-d')) }}" 
-                           class="w-full p-2 border border-gray-300 rounded-md">
+                    <input type="date" name="birth_date" id="birth_date" value="{{ old('birth_date', optional($animal->birth_date)->format('Y-m-d')) }}" class="w-full p-2 border border-gray-300 rounded-md">
                 </div>
-                
 
                 <!-- Medical Condition -->
                 <div>
                     <label for="medical_condition" class="block text-sm font-medium text-gray-600">Medical Condition</label>
                     <textarea name="medical_condition" id="medical_condition" rows="3" class="w-full p-3 border border-gray-300 rounded-md">{{ old('medical_condition', $animal->medical_condition) }}</textarea>
                 </div>
-
-                <!-- File Uploads -->
-                @foreach (['photo_front' => 'Front', 'photo_back' => 'Back', 'photo_left_side' => 'Left Side', 'photo_right_side' => 'Right Side'] as $field => $label)
-                    <div>
-                        <label for="{{ $field }}" class="block text-sm font-medium text-gray-600">Photo {{ $label }}</label>
-                        <input type="file" name="{{ $field }}" id="{{ $field }}" class="w-full p-3 border border-gray-300 rounded-md" onchange="previewImage(event, '{{ $field }}')">
-                    </div>
-                    <div id="{{ $field }}-preview" class="mt-2">
-                        @if ($animal->{'photo_' . $field})
-                            <img src="{{ asset('storage/'.$animal->{'photo_' . $field}) }}" alt="{{ ucfirst($field) }} Photo" class="w-32 h-32 object-cover border border-gray-300 rounded-md">
-                        @endif
-                    </div>
-                @endforeach
 
                 <!-- Submit Button -->
                 <div class="flex justify-between">
@@ -136,26 +132,46 @@
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        // Function to toggle the display of group fields and gender field based on the selection
         function toggleGroupFields() {
             const isGroup = document.getElementById('is_group').value;
             const groupFields = document.getElementById('group-fields');
-            const genderField = document.getElementById('individual-animal-fields');
-            
+            const individualFields = document.getElementById('individual-animal-fields');
+
             if (isGroup === '1') {
-                groupFields.style.display = 'block';
-                genderField.style.display = 'none'; // Hide gender field for groups
+                groupFields.classList.remove('hidden');
+                individualFields.classList.add('hidden');
             } else {
-                groupFields.style.display = 'none';
-                genderField.style.display = 'block'; // Show gender field for individual animals
+                groupFields.classList.add('hidden');
+                individualFields.classList.remove('hidden');
             }
         }
 
-        // Initialize group fields and gender field display on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            toggleGroupFields();
+        document.addEventListener('DOMContentLoaded', toggleGroupFields);
+
+        // Fetch breeds based on selected species
+        document.getElementById('species_id').addEventListener('change', function() {
+            const speciesId = this.value;
+            const breedSelect = document.getElementById('breed_id');
+            
+            // Clear current breed options
+            breedSelect.innerHTML = '<option value="">Select a breed</option>';
+            
+            // Make AJAX call to fetch breeds for selected species
+            if (speciesId) {
+                fetch(`/get-breeds/${speciesId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Add the breed options
+                        data.breeds.forEach(breed => {
+                            const option = document.createElement('option');
+                            option.value = breed.id;
+                            option.textContent = breed.name;
+                            breedSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching breeds:', error));
+            }
         });
     </script>
 </x-app-layout>

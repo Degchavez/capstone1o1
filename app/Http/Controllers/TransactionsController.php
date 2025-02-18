@@ -69,20 +69,14 @@ class TransactionsController extends Controller
           'vet_id' => 'required|exists:users,user_id,role,2',
           'technician_id' => 'nullable|exists:veterinary_technicians,technician_id', // Technician ID from veterinary_technicians
           'vaccine_id' => 'nullable|exists:vaccines,id', // Vaccine ID from vaccines table
-          'status' => 'required|in:pending,completed,cancelled',
+          'status' => 'required|in:0,1,2', // Validate numeric values
           'details' => 'nullable|string',
       ]);
   
-      // Map status string to integer if needed
-      $statusMap = [
-          'pending' => 0,
-          'completed' => 1,
-          'cancelled' => 2,
-      ];
+      // Directly use the status value from the request (it is already validated as numeric)
+      $statusValue = $request->status;
   
-      $statusValue = $statusMap[$request->status] ?? 0; // Default to 0 (pending) if not found
-  
-      // Update the transaction using the update method (Directly updating using the primary key)
+      // Update the transaction using the update method
       Transaction::where('transaction_id', $transaction_id)->update([
           'transaction_type_id' => $request->transaction_type_id,
           'transaction_subtype_id' => $request->transaction_subtype_id,
@@ -142,21 +136,29 @@ public function getTransactionData($transactionId)
         'details' => $transaction->details,
     ]);
 }
-
 public function updateStatus(Request $request, $transaction_id)
 {
     // Find the transaction by its custom primary key 'transaction_id'
     $transaction = Transaction::where('transaction_id', $transaction_id)->first();
     
-    // If the transaction exists, update the status
+    // If the transaction exists, proceed
     if ($transaction) {
-        $transaction->status = $request->status; // Update the status with the selected value
-        // Update the transaction by explicitly targeting 'transaction_id' as the key
-        Transaction::where('transaction_id', $transaction_id)->update(['status' => $request->status]); // Using the update method to target the 'transaction_id' column
+        // Update the status of the transaction
+        Transaction::where('transaction_id', $transaction_id)->update(['status' => $request->status]);
+
+        // Check if the transaction_subtype_id is 8 (vaccination) and the status is 1 (completed)
+        if ($transaction->transaction_subtype_id == 8 && $request->status == 1) {
+            // Find the related animal using the animal_id from the transaction
+            $animal = Animal::where('animal_id', $transaction->animal_id)->first();
+
+            // Update the is_vaccinated field in the animals table
+            if ($animal) {
+                Animal::where('animal_id', $transaction->animal_id)->update(['is_vaccinated' => 1]);
+            }
+        }
     }
 
     // Redirect back with a success message
     return back()->with('status', 'Transaction status updated successfully!');
 }
-
 }

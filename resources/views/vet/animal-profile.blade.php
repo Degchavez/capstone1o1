@@ -17,47 +17,57 @@
                     </div>
                 </div>
 
-                <!-- Animal Details -->
-                <div class="flex-1">
-                    <h1 class="text-4xl font-bold text-gray-900 dark:text-neutral-100 flex items-center space-x-2">
-                        <span>{{ $animal->name }}</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400 dark:text-neutral-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
-                    </h1>
-                    <p class="text-sm text-gray-600 dark:text-neutral-400 mt-2">
-                        <span class="font-semibold">Species:</span> {{ $animal->species->name }}
-                        <span class="mx-2 text-gray-400 dark:text-neutral-500">|</span>
-                        <span class="font-semibold">Breed:</span> {{ $animal->breed->name }}
-                    </p>
-                    <p class="text-sm text-gray-600 dark:text-neutral-400 mt-2 flex items-center space-x-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 21v-2a4 4 0 00-3-3.87V10a7 7 0 10-14 0v5.13A4 4 0 002 19v2h16z" />
-                        </svg>
-                        <a href="{{ route('vet.profile-owner', ['owner_id' => $animal->owner->owner_id]) }}" class="text-blue-600 dark:text-blue-400 hover:underline">
-                            {{ $animal->owner->user->complete_name }}
-                        </a>
-                    </p>
-                    <p class="text-sm text-gray-600 dark:text-neutral-400 mt-2 flex items-center space-x-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12h3m0 0v3m0-3v-3m0 0H12m0 0v3m0-3H9m0 0H6m3 0h3m0 0V9m0 3v3m0-3h3" />
-                        </svg>
-                        <span>
-                            Birthdate: 
-                            @if ($animal->birth_date)
-                                {{ $animal->birth_date->format('Y-m-d') }} ({{ $animal->birth_date->age }} years old)
-                            @else
-                                Not Available
-                            @endif
-                        </span>
-                    </p>
-                    <p class="text-sm text-gray-600 dark:text-neutral-400 mt-2">
-                        <span class="font-semibold">Gender:</span> {{ ucfirst($animal->gender) }}
-                    </p>
-                    <p class="text-sm text-gray-600 dark:text-neutral-400 mt-2">
-                        <span class="font-semibold">Medical Condition:</span> {{ $animal->medical_condition ?? 'None' }}
-                    </p>
-                </div>
+      <!-- Animal Details -->
+<div class="flex-1">
+    <h1 class="text-4xl font-bold text-gray-900 dark:text-neutral-100 flex items-center space-x-2">
+        <span>{{ $animal->name }}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400 dark:text-neutral-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+    </h1>
+    <p class="text-sm text-gray-600 dark:text-neutral-400 mt-2">
+        <span class="font-semibold">Species:</span> 
+        {{ $animal->species ? $animal->species->name : 'Species not specified' }}
+        <span class="mx-2 text-gray-400 dark:text-neutral-500">|</span>
+        <span class="font-semibold">Breed:</span> 
+        {{ $animal->breed ? $animal->breed->name : 'Breed not specified' }}
+    </p>
+    
+    <p class="text-sm text-gray-600 dark:text-neutral-400 mt-2 flex items-center space-x-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 21v-2a4 4 0 00-3-3.87V10a7 7 0 10-14 0v5.13A4 4 0 002 19v2h16z" />
+        </svg>
+        <a href="{{ route('vet.profile-owner', ['owner_id' => $animal->owner->owner_id]) }}" class="text-blue-600 dark:text-blue-400 hover:underline">
+            {{ $animal->owner->user->complete_name }}
+        </a>
+    </p>
+    <p class="text-sm text-gray-600 dark:text-neutral-400 mt-2 flex items-center space-x-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12h3m0 0v3m0-3v-3m0 0H12m0 0v3m0-3H9m0 0H6m3 0h3m0 0V9m0 3v3m0-3h3" />
+        </svg>
+        <span>
+            Birthdate: 
+            @if ($animal->birth_date)
+                {{ $animal->birth_date->format('Y-m-d') }} ({{ $animal->birth_date->age }} years old)
+            @else
+                Not Available
+            @endif
+        </span>
+    </p>
+    @if ($animal->is_group)
+        <p class="text-sm text-gray-600 dark:text-neutral-400 mt-2">
+            <span class="font-semibold">Group Count:</span> {{ $animal->group_count ?? 'Unknown' }}
+        </p>
+    @else
+        <p class="text-sm text-gray-600 dark:text-neutral-400 mt-2">
+            <span class="font-semibold">Gender:</span> {{ ucfirst($animal->gender) }}
+        </p>
+    @endif
+    <p class="text-sm text-gray-600 dark:text-neutral-400 mt-2">
+        <span class="font-semibold">Medical Condition:</span> {{ $animal->medical_condition ?? 'None' }}
+    </p>
+</div>
+
 
               
             </div>

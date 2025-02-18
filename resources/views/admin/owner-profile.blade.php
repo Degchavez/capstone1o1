@@ -1,8 +1,14 @@
 <x-app-layout>
     <div class="container mx-auto p-8 shadow-lg rounded-xl">
+       
         <!-- Main Card Wrapper -->
         <div class="bg-white p-8 rounded-lg shadow-xl hover:shadow-2xl transition-all max-w-4xl mx-auto">
-            
+            @if (session()->has('message'))
+            <div class="mt-4 bg-green-100 border border-green-400 text-green-800 text-sm rounded-lg p-4" role="alert">
+                <span class="font-semibold">Success:</span> {{ session('message') }}
+            </div>
+        @endif
+        
             <!-- Flex Container for Header Buttons -->
             <div class="flex justify-between items-center mb-6">
                 <!-- Go Back Button -->
@@ -120,7 +126,8 @@
                                             <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Name</th>
                                             <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Species</th>
                                             <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Breed</th>
-                                          
+                                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Vaccination Status</th>
+
                                             <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
                                         </tr>
                                     </thead>
@@ -145,9 +152,24 @@
                                                         
                                                     </b>
                                                 </td>
+                                                <td class="px-6 py-3 text-gray-600">
+                                                    {{ $animal->species ? $animal->species->name : 'Species not specified' }}
+                                                </td>
+                                                <td class="px-6 py-3 text-gray-600">
+                                                    {{ $animal->breed ? $animal->breed->name : 'Breed not specified' }}
+                                                </td>
+                                                <td class="px-6 py-4 text-sm text-gray-900">
+                                                    @if($animal->is_vaccinated == 1)
+                                                        <span class="text-green-600 font-semibold">Vaccinated</span>
+                                                    @elseif($animal->is_vaccinated == 2)
+                                                        <span class="text-gray-600 font-semibold">No Vaccination Required</span>
+                                                    @else
+                                                        <span class="text-red-600 font-semibold">Not Vaccinated</span>
+                                                    @endif
+                                                </td>
                                                 
-                                                                                                <td class="px-6 py-3 text-gray-600">{{ $animal->species->name }}</td>
-                                                <td class="px-6 py-3 text-gray-600">{{ $animal->breed->name }}</td>
+                                                
+                                                
                                        
                                               
                                                      <td class="px-6 py-3 text-sm">

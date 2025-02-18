@@ -102,6 +102,15 @@
                     <textarea name="medical_condition" id="medical_condition" rows="3" class="w-full p-3 border border-gray-300 rounded-md">{{ old('medical_condition') }}</textarea>
                 </div>
 
+                <!-- Is Vaccinated -->
+                <div>
+                    <label for="is_vaccinated" class="block text-sm font-medium text-gray-600">Vaccination Status</label>
+                    <select name="is_vaccinated" id="is_vaccinated" class="w-full p-3 border border-gray-300 rounded-md">
+                        <option value="0" {{ old('is_vaccinated') == '0' ? 'selected' : '' }}>Not Vaccinated</option>
+                        <option value="1" {{ old('is_vaccinated') == '1' ? 'selected' : '' }}>Vaccinated</option>
+                        <option value="2" {{ old('is_vaccinated') == '2' ? 'selected' : '' }}>No Vaccination Required</option>
+                    </select>
+                </div>
                 <!-- File Uploads -->
                 @foreach (['photo_front' => 'Front', 'photo_back' => 'Back', 'photo_left_side' => 'Left Side', 'photo_right_side' => 'Right Side'] as $field => $label)
                     <div>

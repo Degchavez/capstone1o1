@@ -144,7 +144,7 @@ class UserController extends Controller
             $request->only(['civil_status', 'category']) + ['permit' => 1] // Data to update, with permit added
         );
     
-        return redirect()->route('users.edit-form', ['id' => $user->user_id])
+        return redirect()->route('admin-users')
             ->with('message', 'User details updated successfully.');
     }
     
@@ -297,7 +297,7 @@ class UserController extends Controller
         Mail::to($request->email)->send(new WelcomeEmail($user, $randomPassword));
     
         // Redirect with a success message
-        return redirect()->route('admin-owners')->with('success', 'User and owner registered successfully, and password has been emailed!');
+        return redirect()->route('admin-owners')->with('message', 'User and owner registered successfully, and password has been emailed!');
     }
     
 
@@ -444,7 +444,7 @@ class UserController extends Controller
     // Send the email with the generated password
     \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\WelcomeEmail($user, $randomPassword));
 
-    return redirect()->route('admin-veterinarians')->with('success', 'Veterinarian registered successfully! Password has been sent to their email.');
+    return redirect()->route('admin-veterinarians')->with('message', 'Veterinarian registered successfully! Password has been sent to their email.');
 }
 
     public function deleteProfileImage_vet($id)
@@ -506,7 +506,7 @@ public function update_veterinarian(Request $request, $id)
     $veterinarian->save();
 
     // Redirect with success message
-    return redirect()->route('admin-veterinarians')->with('success', 'Veterinarian updated successfully!');
+    return redirect()->route('admin-veterinarians')->with('message', 'Veterinarian updated successfully!');
 }
 
 
@@ -521,7 +521,7 @@ public function destroy_veterinarian($user_id)
     $veterinarian->delete();
 
     // Redirect or return a response
-    return redirect()->route('admin-veterinarians')->with('success', 'Veterinarian deleted successfully.');
+    return redirect()->route('admin-veterinarians')->with('message', 'Veterinarian deleted successfully.');
 }
 
    }

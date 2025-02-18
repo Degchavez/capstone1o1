@@ -4,10 +4,19 @@
         <div class="max-w-full px-6 py-6 mx-auto">
             <!-- Success Message -->
             @if (session()->has('message'))
-                <div class="mt-4 bg-green-100 border border-green-400 text-green-800 text-sm rounded-lg p-4" role="alert">
-                    <span class="font-semibold">Success:</span> {{ session('message') }}
-                </div>
-            @endif
+            <div class="mt-4 bg-green-100 border border-green-400 text-green-800 text-sm rounded-lg p-4" role="alert">
+                <span class="font-semibold">Success:</span> {{ session('message') }}
+            </div>
+        @endif
+        
+        @if (session()->has('error'))
+            <div class="mt-4 bg-red-100 border border-red-400 text-red-800 text-sm rounded-lg p-4" role="alert">
+                <span class="font-semibold">Error:</span> {{ session('error') }}
+            </div>
+        @endif
+         
+
+            
 
             <!-- Page Header -->
             <div class="text-center mt-8">

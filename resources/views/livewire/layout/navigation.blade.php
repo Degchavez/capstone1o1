@@ -166,13 +166,13 @@ new class extends Component
                                 <x-dropdown-link :href="route('newbarangay.load')" wire:navigate>
                                     {{ __('Barangays') }}
                                 </x-dropdown-link>
-                                <x-dropdown-link :href="route('species.breed')" wire:navigate>
+                                <x-dropdown-link :href="route('recspecies.breed')" wire:navigate>
                                     {{ __('Species & Breeds') }}
                                 </x-dropdown-link>
-                                <x-dropdown-link :href="route('subtype.index')" wire:navigate>
+                                <x-dropdown-link :href="route('recsubtype.index')" wire:navigate>
                                     {{ __('Transactions') }}
                                 </x-dropdown-link>
-                                <x-dropdown-link :href="route('designation.index')" wire:navigate>
+                                <x-dropdown-link :href="route('recdesignation.index')" wire:navigate>
                                     {{ __('Designations') }}
                                 </x-dropdown-link>
                             </x-slot>
@@ -315,7 +315,7 @@ new class extends Component
 
   
                     <x-slot name="content">
-                        <x-dropdown-link :href="route('vet.settings')" wire:navigate>
+                        <x-dropdown-link :href="route('rec.settings')" wire:navigate>
                             {{ __('Settings') }}
                         </x-dropdown-link>
                         <!-- Authentication -->

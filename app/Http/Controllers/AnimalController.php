@@ -50,7 +50,7 @@ class AnimalController extends Controller
         $request->validate([
             'transaction_type_id' => 'required|exists:transaction_types,id',
             'transaction_subtype_id' => 'required|exists:transaction_subtypes,id',
-            'vet_id' => 'required|exists:users,user_id', // Vet must be a valid user
+            'vet_id' => 'nullable|exists:users,user_id', // Vet must be a valid user
             'technician_id' => 'nullable|exists:veterinary_technicians,technician_id', // Technician ID now from VeterinaryTechnician model
             'vaccine_id' => 'nullable|exists:vaccines,id', // Vaccine optional
             'notes' => 'nullable|string',
@@ -114,6 +114,8 @@ class AnimalController extends Controller
              'is_group' => 'required|boolean',
              'group_count' => 'required_if:is_group,true|integer|min:1', // Required if group
              'color' => 'nullable|string|max:255', // Color validation
+             'is_vaccinated' => 'required|in:0,1,2', // Add validation for is_vaccinated
+
          ]);
      
          // Fetch the existing animal record
@@ -127,6 +129,8 @@ class AnimalController extends Controller
              'medical_condition' => $request->medical_condition,
              'is_group' => $request->is_group,
              'color' => $request->color,
+             'is_vaccinated' => $request->is_vaccinated,
+
          ];
      
          // Conditional logic for name and group-specific fields
@@ -155,7 +159,7 @@ class AnimalController extends Controller
      
          // Redirect to the animal's profile with a success message
          return redirect()->route('animals.profile', ['animal_id' => $animal->animal_id])
-             ->with('success', 'Animal updated successfully.');
+             ->with('message', 'Animal updated successfully.');
      }
      
 
@@ -230,11 +234,13 @@ public function animalStore(Request $request)
         'photo_left_side' => 'nullable|image|max:2048',
         'photo_right_side' => 'nullable|image|max:2048',
         'is_group' => 'required|boolean', // Determine if it's a group
+        'is_vaccinated' => 'required|in:0,1,2', // Add validation for is_vaccinated
+
     ]);
     
     // Prepare the animal data
     $data = $request->only([
-        'name','color', 'owner_id', 'species_id', 'breed_id', 'birth_date', 'gender', 'medical_condition', 'is_group', 'group_count'
+        'name','color', 'owner_id', 'species_id', 'breed_id', 'birth_date', 'gender', 'medical_condition', 'is_group', 'group_count','is_vaccinated',
     ]);
 
     // Convert is_group to boolean
@@ -268,6 +274,7 @@ public function animalStore(Request $request)
             'medical_condition' => $data['medical_condition'],
             'is_group' => $data['is_group'],
             'group_count' => $data['group_count'] ?? 1, // Null for individual animals
+            'is_vaccinated' => $data['is_vaccinated'],
             'photo_front' => $data['photo_front'] ?? null,
             'photo_back' => $data['photo_back'] ?? null,
             'photo_left_side' => $data['photo_left_side'] ?? null,
@@ -276,7 +283,8 @@ public function animalStore(Request $request)
 
         // Redirect with success message
         return redirect()->route('admin-animals')
-            ->with('success', 'Animal added successfully.');
+        ->with('message', 'Animal added successfully.');
+    
 
     } catch (\Exception $e) {
         // Handle exceptions and return the error message
@@ -339,6 +347,8 @@ public function animalUpdate(Request $request, $animal_id)
         'photo_left_side' => 'nullable|image|max:2048',
         'photo_right_side' => 'nullable|image|max:2048',
         'is_group' => 'required|boolean', // Add validation for is_group
+        'is_vaccinated' => 'required|in:0,1,2', // Add validation for is_vaccinated
+
     ];
 
     // Apply conditional validation based on 'is_group'
@@ -362,7 +372,7 @@ public function animalUpdate(Request $request, $animal_id)
 
     // Prepare the animal data
     $data = $request->only([
-        'name', 'owner_id', 'species_id', 'breed_id', 'birth_date', 'gender', 'medical_condition', 'is_group', 'group_count', 'color'
+        'name', 'owner_id', 'species_id', 'breed_id', 'birth_date', 'gender', 'medical_condition', 'is_group', 'group_count', 'color', 'is_vaccinated',
     ]);
 
     // Handle photo uploads and update the existing photos
@@ -389,7 +399,7 @@ public function animalUpdate(Request $request, $animal_id)
 
         // Redirect with success message
         return redirect()->route('admin-animals')
-            ->with('success', 'Animal updated successfully.');
+            ->with('message', 'Animal updated successfully.');
 
     } catch (\Exception $e) {
         // Handle exceptions and return the error message

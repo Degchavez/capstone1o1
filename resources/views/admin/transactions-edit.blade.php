@@ -70,14 +70,18 @@
                     </div>
 
                     <!-- Status -->
-                    <div>
-                        <label for="status" class="block text-sm font-medium text-gray-600 dark:text-neutral-400">Status</label>
-                        <select id="status" name="status" class="w-full border border-gray-300 rounded-lg dark:bg-neutral-800 dark:border-neutral-600 dark:text-neutral-200">
-                            <option value="pending" {{ old('status', $transaction->status) == 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="completed" {{ old('status', $transaction->status) == 'completed' ? 'selected' : '' }}>Completed</option>
-                            <option value="cancelled" {{ old('status', $transaction->status) == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                    <div class="mb-4">
+                        <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                        <select name="status" id="status" class="w-full p-2 border border-gray-300 rounded-md">
+                            <option value="0" {{ old('status', $transaction->status) == 0 ? 'selected' : '' }}>Pending</option>
+                            <option value="1" {{ old('status', $transaction->status) == 1 ? 'selected' : '' }}>Completed</option>
+                            <option value="2" {{ old('status', $transaction->status) == 2 ? 'selected' : '' }}>Cancelled</option>
                         </select>
+                        @error('status')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
                     </div>
+                    
                 </div>
 
                 <div class="mt-4">

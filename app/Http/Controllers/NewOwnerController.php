@@ -112,7 +112,7 @@ class NewOwnerController extends Controller
             'photo_left_side' => $photos['photo_left_side'],
             'photo_right_side' => $photos['photo_right_side'],
             'is_group' => $request->is_group,
-            'group_count' => $request->is_group ? $request->group_count : null,
+            'group_count' => $request->is_group ? $request->group_count : 1,
         ]);
     
        

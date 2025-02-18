@@ -8,14 +8,15 @@
         </p>
     </div>
       <!-- Add Button -->
-   
+
+      @if (session()->has('message'))
+      <div class="mt-4 bg-green-100 border border-green-400 text-green-800 text-sm rounded-lg p-4" role="alert">
+          <span class="font-semibold">Success:</span> {{ session('message') }}
+      </div>
+  @endif
     <!-- Table Section -->
     <div class="max-w-[100%] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
-        @if (session()->has('message'))
-            <div class="mt-2 bg-teal-600 text-xs text-white rounded-lg p-4" role="alert">
-                <span class="font-semibold">Success:</span> {{ session('message') }}
-            </div>
-        @endif
+       
             
         <div class="flex flex-col w-full">
             <div class="-m-1.5 overflow-x-auto">

@@ -47,6 +47,18 @@
                     </select>
                 </div>
 
+                   <!-- Is Vaccinated -->
+                   <div>
+                    <label for="is_vaccinated" class="block text-sm font-medium text-gray-600">Vaccination Status</label>
+                    <select name="is_vaccinated" id="is_vaccinated" class="w-full p-3 border border-gray-300 rounded-md">
+                        <option value="" {{ old('is_vaccinated',) === null ? 'selected' : '' }}>Select Vaccination Status</option>
+
+                        <option value="0" {{ old('is_vaccinated') == '0' ? 'selected' : '' }}>Not Vaccinated</option>
+                        <option value="1" {{ old('is_vaccinated') == '1' ? 'selected' : '' }}>Vaccinated</option>
+                        <option value="2" {{ old('is_vaccinated') == '2' ? 'selected' : '' }}>No Vaccination Required</option>
+                    </select>
+                </div>
+
                 <!-- Animal Name -->
                 <div>
                     <label for="name" class="block text-sm font-medium text-gray-600">Animal Name</label>

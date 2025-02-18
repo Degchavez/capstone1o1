@@ -2,8 +2,11 @@
     <div class="container mx-auto p-6">
         <h1 class="text-2xl font-bold mb-4">Species and Breeds</h1>
 
-        <!-- Add Species Button -->
-
+        @if(session('success'))
+        <div class="bg-green-100 text-green-700 p-4 rounded mb-4">
+            {{ session('success') }}
+        </div>
+    @endif
         <!-- Flex container for tables -->
         <div class="flex space-x-6">
             
@@ -11,7 +14,7 @@
             <div class="flex-1 bg-white shadow-md rounded-lg mb-6">
                 
                 <h2 class="text-xl font-semibold mb-2">Species</h2>
-                <a href="{{ route('species.create') }}" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 mb-4 inline-block">
+                <a href="{{ route('newspecies.create') }}" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 mb-4 inline-block">
                     Add Species
                 </a>
                 <table class="min-w-full table-auto">
@@ -26,12 +29,8 @@
                             <tr class="border-b hover:bg-gray-50">
                                 <td class="px-4 py-2">{{ $specie->name }}</td>
                                 <td class="px-4 py-2 flex space-x-2">
-                                    <a href="{{ route('species.edit', $specie) }}" class="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 text-sm">Edit</a>
-                                    <form action="{{ route('species.destroy', $specie) }}" method="POST" class="inline-block ml-2">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 text-sm" onclick="return confirm('Are you sure you want to delete this species?')">Delete</button>
-                                    </form>
+                                    <a href="{{ route('newspecies.edit', $specie) }}" class="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 text-sm">Edit</a>
+                                  
                                 </td>
                             </tr>
                         @endforeach
@@ -44,7 +43,7 @@
                 <h2 class="text-xl font-semibold mb-2">Breeds</h2>
                 
                 <!-- Add Breed Button -->
-                <a href="{{ route('breeds.create') }}" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 mb-4 inline-block">
+                <a href="{{ route('newbreeds.create') }}" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 mb-4 inline-block">
                     Add Breed
                 </a>
 
@@ -79,20 +78,16 @@
                         </thead>
                         <tbody id="breedTableBody" class="text-gray-700">
                             @foreach ($breeds as $breed)
-                            <tr class="border-b hover:bg-gray-50">
-                                <td class="px-4 py-2">{{ $breed->name }}</td>
-                                <td class="px-4 py-2">{{ $breed->species->name }}</td>
-                                <td class="px-4 py-2 flex space-x-2">
-                                    <a href="{{ route('breeds.edit', $breed) }}" class="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 text-sm">Edit</a>
-                                    <form action="{{ route('breeds.destroy', $breed) }}" method="POST" class="inline-block ml-2">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 text-sm" onclick="return confirm('Are you sure you want to delete this breed?')">Delete</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @endforeach
-                        
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="px-4 py-2">{{ $breed->name }}</td>
+                                    <td class="px-4 py-2">{{ $breed->species->name }}</td>
+
+                                    <td class="px-4 py-2 flex space-x-2">
+                                        <a href="{{ route('newbreeds.edits', $breed) }}" class="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 text-sm">Edit</a>
+                                     
+                                    </td>
+                                </tr>
+                            @endforeach
                         </tbody>
                     </table>
 
@@ -105,6 +100,7 @@
         </div>
     </div>
 
+    <!-- Include the JavaScript code -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script>
         $(document).ready(function () {

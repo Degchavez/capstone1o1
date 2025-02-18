@@ -137,9 +137,13 @@
                                                     </b>
                                                 </td>
                                                 
-                                                                                                <td class="px-6 py-3 text-gray-600">{{ $animal->species->name }}</td>
-                                                <td class="px-6 py-3 text-gray-600">{{ $animal->breed->name }}</td>
-                                       
+                                                <td class="px-6 py-3 text-gray-600">
+                                                    {{ $animal->species ? $animal->species->name : 'Species not specified' }}
+                                                </td>
+                                                <td class="px-6 py-3 text-gray-600">
+                                                    {{ $animal->breed ? $animal->breed->name : 'Breed not specified' }}
+                                                </td>
+                                                
                                               
                                                    
                                             </tr>

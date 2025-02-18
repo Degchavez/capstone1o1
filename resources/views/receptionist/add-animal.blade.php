@@ -102,6 +102,16 @@
                     <textarea name="medical_condition" id="medical_condition" rows="3" class="w-full p-3 border border-gray-300 rounded-md">{{ old('medical_condition') }}</textarea>
                 </div>
 
+                  <!-- Is Vaccinated -->
+                  <div>
+                    <label for="is_vaccinated" class="block text-sm font-medium text-gray-600">Vaccination Status</label>
+                    <select name="is_vaccinated" id="is_vaccinated" class="w-full p-3 border border-gray-300 rounded-md">
+                        <option value="0" {{ old('is_vaccinated') == '0' ? 'selected' : '' }}>Not Vaccinated</option>
+                        <option value="1" {{ old('is_vaccinated') == '1' ? 'selected' : '' }}>Vaccinated</option>
+                        <option value="2" {{ old('is_vaccinated') == '2' ? 'selected' : '' }}>No Vaccination Required</option>
+                    </select>
+                </div>
+
                 <!-- File Uploads -->
                 @foreach (['photo_front' => 'Front', 'photo_back' => 'Back', 'photo_left_side' => 'Left Side', 'photo_right_side' => 'Right Side'] as $field => $label)
                     <div>
@@ -166,25 +176,23 @@
         }
 
         // Handle the change event for the species field to fetch corresponding breeds
-        $(document).ready(function() {
-            $('#species_id').change(function() {
-                var speciesId = $(this).val();
+        document.getElementById('species_id').addEventListener('change', function () {
+            const speciesId = this.value;
 
-                if (speciesId) {
-                    $.ajax({
-                        url: '/get-breedz/' + speciesId,
-                        type: 'GET',
-                        success: function(data) {
-                            $('#breed_id').empty().append('<option value="">Select a breed</option>');
-                            $.each(data.breeds, function(index, breed) {
-                                $('#breed_id').append('<option value="' + breed.id + '">' + breed.name + '</option>');
-                            });
-                        }
+            fetch(`/get-breedz/${speciesId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const breedSelect = document.getElementById('breed_id');
+                    breedSelect.innerHTML = '<option value="">Select a breed</option>';
+                    data.breeds.forEach(breed => {
+                        const option = document.createElement('option');
+                        option.value = breed.id;
+                        option.textContent = breed.name;
+                        breedSelect.appendChild(option);
                     });
-                } else {
-                    $('#breed_id').empty().append('<option value="">Select a breed</option>');
-                }
-            });
+                })
+                .catch(error => console.error('Error fetching breeds:', error));
+        
         });
     </script>
 </x-app-layout>

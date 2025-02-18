@@ -25,35 +25,68 @@ use Illuminate\Http\Request;
 
 class AdminController extends Controller
 {
-    public function loadAdminDashboard()
-   {    
-      // Calculate the dashboard statistics
-      $totalOwners = User::where('role', 1)->count(); // Owners have role = 1
-      $successfulTransactions = Transaction::where('status', '1')->count(); // Adjust 'status' based on your database
-      $totalAnimals = Animal::count(); // Count all animals in the database
+    public function loadAdminDashboard(Request $request)
+{
+    // Retrieve filter and search inputs
+    $search = $request->input('search');
+    $statusFilter = $request->input('status');
+    $veterinarianFilter = $request->input('veterinarian');
+    $technicianFilter = $request->input('technician');
 
-      $lastWeekOwners = User::where('role', 1)
-        ->whereBetween('created_at', [now()->subWeek()->startOfWeek(), now()->subWeek()->endOfWeek()])
-        ->count();
-    $lastWeekTransactions = Transaction::where('status', 'successful')
-        ->whereBetween('created_at', [now()->subWeek()->startOfWeek(), now()->subWeek()->endOfWeek()])
-        ->count();
-    $lastWeekAnimals = Animal::whereBetween('created_at', [now()->subWeek()->startOfWeek(), now()->subWeek()->endOfWeek()])
-        ->count();
-      // Fetch recent transactions
-      $recentTransactions = Transaction::latest()->limit(5)->get();
+    // Query for transactions with filters
+    $transactionsQuery = Transaction::with(['transactionSubtype', 'owner.user', 'animal', 'vet', 'technician']);
 
-      return view('admin.dashboard', compact(
-          'totalOwners',
-          'successfulTransactions',
-          'totalAnimals',
-          'recentTransactions',
-          'lastWeekOwners',
-          'lastWeekTransactions',
-          'lastWeekAnimals'
-      ));
+    if ($search) {
+        $transactionsQuery->whereHas('owner.user', function ($query) use ($search) {
+            $query->where('complete_name', 'like', '%' . $search . '%');
+        })->orWhereHas('animal', function ($query) use ($search) {
+            $query->where('name', 'like', '%' . $search . '%');
+        });
+    }
 
-   } 
+    if ($statusFilter) {
+        $transactionsQuery->where('status', $statusFilter);
+    }
+
+    if ($veterinarianFilter) {
+        $transactionsQuery->where('vet_id', $veterinarianFilter);
+    }
+
+    if ($technicianFilter) {
+        $transactionsQuery->where('technician_id', $technicianFilter);
+    }
+
+    $recentTransactions = $transactionsQuery->latest()->paginate(5);
+
+    // Fetch data for filters
+    $veterinarians = User::where('role', 2)->get(); // Veterinarians have role = 2
+    $technicians = VeterinaryTechnician::all(); // Fetch all technicians
+    $statuses = [
+        0 => 'Pending',
+        1 => 'Completed',
+        2 => 'Canceled',
+    ];
+
+    // Dashboard statistics
+    $totalOwners = User::where('role', 1)->count();
+    $successfulTransactions = Transaction::where('status', 1)->count();
+    $totalAnimals = Animal::count();
+    $lastWeekTransactions = Transaction::whereBetween('created_at', [now()->subWeek()->startOfWeek(), now()->subWeek()->endOfWeek()])
+        ->count();
+
+    return view('admin.dashboard', compact(
+        'veterinarians',
+        'technicians',
+        'recentTransactions',
+        'statuses',
+        'totalOwners',
+        'successfulTransactions',
+        'totalAnimals',
+        'lastWeekTransactions'
+    ));
+}
+
+    
 
    public function loadAnimalsList(Request $request)
 {
@@ -379,19 +412,27 @@ class AdminController extends Controller
    public function destroy(User $user)
    {
        try {
-           // Delete associated owner details if they exist
-           if ($user->owner) {
-               $user->owner->delete(); // Delete the related owner record
+           // Check if the user is an owner
+           if ($user->role === 1 && $user->owner) {
+               // Delete related transactions
+               $user->owner->transactions()->delete();
+               
+               // Delete related animals
+               $user->owner->animals()->delete();
+   
+               // Delete the owner details
+               $user->owner->delete();
            }
    
-           // Now delete the user
-           $user->delete(); // Soft delete or hard delete depending on your model
+           // Delete the user
+           $user->delete();
    
-           return redirect()->back()->with('message', 'User and their owner details deleted successfully!');
+           return redirect()->back()->with('message', 'User, their owner details, transactions, and animals deleted successfully!');
        } catch (\Exception $e) {
            return redirect()->back()->with('error', 'An error occurred while deleting the user: ' . $e->getMessage());
        }
    }
+   
    
 
    public function loadOwnersList(Request $request)
@@ -565,6 +606,7 @@ class AdminController extends Controller
            'photo_right_side' => 'nullable|image|max:2048',
            'is_group' => 'required|boolean', // Add validation for is_group
            'group_count' => 'required|integer|min:1', // Add validation for group_count (required)
+           'is_vaccinated' => 'required|in:0,1,2', // Add validation for is_vaccinated
        ]);
    
        // Prepare the data for the animal
@@ -579,6 +621,7 @@ class AdminController extends Controller
            'medical_condition',
            'is_group', // Include is_group in the data
            'group_count', // Include group_count in the data
+           'is_vaccinated', // Include is_vaccinated in the data
        ]);
    
        // Handle file uploads for photos
@@ -601,6 +644,7 @@ class AdminController extends Controller
            return back()->withErrors(['error' => $e->getMessage()]);
        }
    }
+   
    
 
 
@@ -976,5 +1020,42 @@ public function showOwnerProfile(Request $request, $owner_id)
     return view('owner.owner-profile', compact('owner', 'animals', 'species', 'breeds', 'message'));
 }
     
+public function updateTechnician(Request $request, $transaction_id)
+{
+    // Find the transaction by its custom primary key 'transaction_id'
+    $transaction = Transaction::where('transaction_id', $transaction_id)->first();
+
+    // If the transaction exists, update the technician_id
+    if ($transaction) {
+        $transaction->technician_id = $request->technician_id; // Update the technician_id with the selected value
+        // Update the transaction by explicitly targeting 'transaction_id' as the key
+        Transaction::where('transaction_id', $transaction_id)->update(['technician_id' => $request->technician_id]); // Using the update method to target the 'transaction_id' column
+    }
+
+    // Redirect back with a success message
+    return back()->with('success', 'Technician updated successfully.');
+}
+
+public function updateDetails(Request $request, $transaction_id)
+{
+    // Validate the input
+    $request->validate([
+        'details' => 'required|string|max:1000', // Adjust max length as needed
+    ]);
+
+    // Find the transaction
+    $transaction = Transaction::where('transaction_id', $transaction_id)->first();
+
+    // Update the details field
+    if ($transaction) {
+     $transaction->details = $request->details; // Update the technician_id with the selected value
+     // Update the transaction by explicitly targeting 'transaction_id' as the key
+     Transaction::where('transaction_id', $transaction_id)->update(['details' => $request->details]); // Using the update method to target the 'transaction_id' column
+ }
+
+    // Redirect with success message
+    return redirect()->back()->with('success', 'Transaction details updated successfully.');
+}
+
 
 }

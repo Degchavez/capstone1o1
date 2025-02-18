@@ -94,5 +94,10 @@ public function vetTransactions()
     return $this->hasMany(Transaction::class, 'vet_id', 'user_id');
 }
 
+public function categories()
+{
+    return $this->belongsToMany(Category::class, 'category_user', 'user_id', 'category_id');
+}
+
 
 }    

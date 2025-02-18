@@ -46,6 +46,17 @@
                     </select>
                 </div>
 
+                <div>
+                    <label for="is_vaccinated" class="block text-sm font-medium text-gray-600">Vaccination Status</label>
+                    <select name="is_vaccinated" id="is_vaccinated" class="w-full p-2 border border-gray-300 rounded-md">
+                        <option value="" {{ old('is_vaccinated', $animal->is_vaccinated) === null ? 'selected' : '' }}>Select Vaccination Status</option>
+                        <option value="0" {{ old('is_vaccinated', $animal->is_vaccinated) == '0' ? 'selected' : '' }}>Not Vaccinated</option>
+                        <option value="1" {{ old('is_vaccinated', $animal->is_vaccinated) == '1' ? 'selected' : '' }}>Vaccinated</option>
+                        <option value="2" {{ old('is_vaccinated', $animal->is_vaccinated) == '2' ? 'selected' : '' }}>No Vaccination Required</option>
+                    </select>
+                </div>
+                
+
                 <!-- Animal Name -->
                 <div>
                     <label for="name" class="block text-sm font-medium text-gray-600">Animal Name</label>
@@ -149,39 +160,39 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        // Function to toggle the display of group fields and gender field based on the selection
         function toggleGroupFields() {
             const isGroup = document.getElementById('is_group').value;
             const groupFields = document.getElementById('group-fields');
-            const genderField = document.getElementById('individual-animal-fields');
-            
+            const individualFields = document.getElementById('individual-animal-fields');
+
             if (isGroup === '1') {
-                groupFields.style.display = 'block';
-                genderField.style.display = 'none'; // Hide gender field for groups
+                groupFields.classList.remove('hidden');
+                individualFields.classList.add('hidden');
             } else {
-                groupFields.style.display = 'none';
-                genderField.style.display = 'block'; // Show gender field for individual animals
+                groupFields.classList.add('hidden');
+                individualFields.classList.remove('hidden');
             }
         }
 
-        // Initialize group fields and gender field display on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            toggleGroupFields();
-            
+        document.addEventListener('DOMContentLoaded', toggleGroupFields);
+
+        // Fetch breeds based on selected species
+        document.getElementById('species_id').addEventListener('change', function () {
+            const speciesId = this.value;
+
+            fetch(`/get-breedz/${speciesId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const breedSelect = document.getElementById('breed_id');
+                    breedSelect.innerHTML = '<option value="">Select a breed</option>';
+                    data.breeds.forEach(breed => {
+                        const option = document.createElement('option');
+                        option.value = breed.id;
+                        option.textContent = breed.name;
+                        breedSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching breeds:', error));
         });
-        function previewImage(event, fieldId) {
-    const preview = document.getElementById(fieldId + '-preview');
-    const file = event.target.files[0];
-
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            preview.innerHTML = `<img src="${e.target.result}" alt="Image Preview" class="w-32 h-32 object-cover border border-gray-300 rounded-md">`;
-        };
-        reader.readAsDataURL(file);
-    }
-}
-
-        
     </script>
 </x-app-layout>

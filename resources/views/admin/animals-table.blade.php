@@ -9,6 +9,13 @@
             </p>
         </div>
 
+            @if (session()->has('message'))
+    <div class="mt-4 bg-green-100 border border-green-400 text-green-800 text-sm rounded-lg p-4" role="alert">
+        <span class="font-semibold">Success:</span> {{ session('message') }}
+    </div>
+@endif
+
+
         <div class="max-w-[100rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
             <!-- Card -->
             <div class="flex flex-col">
@@ -107,6 +114,9 @@
                                             <span class="text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-neutral-200">Latest Transaction</span>
                                         </th>
                                         <th scope="col" class="px-6 py-3 text-start">
+                                            <span class="text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-neutral-200">Vaccination Status</span>
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-start">
                                             <span class="text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-neutral-200">Created</span>
                                         </th>
                                         <th scope="col" class="px-6 py-3 text-start">
@@ -142,9 +152,10 @@
 
                                         <td class="px-6 py-3 text-start">
                                             <div class="text-sm text-gray-500 dark:text-neutral-400">
-                                                {{ $animal->species->name }}<br>
-                                                {{ $animal->breed->name }}
+                                                {{ $animal->species->name ?? 'Species not specified' }}<br>
+                                                {{ $animal->breed->name ?? 'Breed not specified' }}
                                             </div>
+                                            
                                         </td>
                                         <td class="px-6 py-3 text-start">
                                             @if($animal->transactions->isNotEmpty())
@@ -154,8 +165,18 @@
                                                 @if ($latestTransaction)
                                                     <!-- Display Veterinarian Information -->
                                                     @if ($latestTransaction->vet)
-                                                        <strong>Veterinarian: {{ $latestTransaction->vet->complete_name }}</strong><br>
-                                                        Contact: {{ $latestTransaction->vet->contact_no }}<br>
+                                                    <strong>
+                                                        Veterinarian: 
+                                                        @if($latestTransaction->vet)
+                                                            <a href="{{ route('admin.veterinarian.profile', $latestTransaction->vet->user_id) }}" 
+                                                               class="text-blue-500 hover:underline">
+                                                                {{ $latestTransaction->vet->complete_name }}
+                                                            </a>
+                                                        @else
+                                                            No Veterinarian Selected
+                                                        @endif
+                                                    </strong><br>
+                                                                                                            Contact: {{ $latestTransaction->vet->contact_no }}<br>
                                                     @else
                                                         <p>No veterinarian assigned for the latest transaction.</p>
                                                     @endif
@@ -191,6 +212,15 @@
                                                 Status: {{ ['Pending', 'Completed', 'Canceled'][$latestTransaction->status] ?? 'Unknown' }}
                                             @else
                                                 <p>No transactions for this animal.</p>
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">
+                                            @if($animal->is_vaccinated == 1)
+                                                <span class="text-green-600 font-semibold">Vaccinated</span>
+                                            @elseif($animal->is_vaccinated == 2)
+                                                <span class="text-gray-600 font-semibold">No Vaccination Required</span>
+                                            @else
+                                                <span class="text-red-600 font-semibold">Not Vaccinated</span>
                                             @endif
                                         </td>
                                         

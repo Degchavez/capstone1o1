@@ -11,6 +11,9 @@ use App\Models\Vaccine; // Import the Species model
 use App\Models\Technician; // Import the Species model
 use App\Models\Designation;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth; // Add this at the top of your controller
+use Illuminate\Support\Facades\Hash; // Add this at the top of your controller
+
 
 use App\Models\Transaction; // Import the Species model
 use App\Models\TransactionSubtype; // Import the model
@@ -588,6 +591,8 @@ public function showAddAnimalForm($owner_id)
            'photo_right_side' => 'nullable|image|max:2048',
            'is_group' => 'required|boolean', // Add validation for is_group
            'group_count' => 'required|integer|min:1', // Add validation for group_count (required)
+           'is_vaccinated' => 'required|in:0,1,2', // Add validation for is_vaccinated
+
        ]);
    
        // Prepare the data for the animal
@@ -602,6 +607,8 @@ public function showAddAnimalForm($owner_id)
            'medical_condition',
            'is_group', // Include is_group in the data
            'group_count', // Include group_count in the data
+           'is_vaccinated', // Include is_vaccinated in the data
+
        ]);
    
        // Handle file uploads for photos
@@ -697,6 +704,8 @@ public function showAddAnimalForm($owner_id)
             'photo_right_side' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'is_group' => 'nullable|boolean',
             'group_count' => 'nullable|integer|min:1|required_if:is_group,true',
+            'is_vaccinated' => 'required|in:0,1,2', // Add validation for is_vaccinated
+
         ]);
     
         $animal = Animal::where('animal_id', $animal_id)->firstOrFail();
@@ -730,7 +739,9 @@ public function showAddAnimalForm($owner_id)
             'photo_left_side' => $photos['photo_left_side'],
             'photo_right_side' => $photos['photo_right_side'],
             'is_group' => $request->is_group,
-            'group_count' => $request->is_group ? $request->group_count : null,
+            'group_count' => $request->is_group ? $request->group_count : 1,
+            'is_vaccinated' => $request->is_vaccinated,
+
         ]);
     
        
@@ -1032,11 +1043,13 @@ public function animalStore(Request $request)
         'photo_left_side' => 'nullable|image|max:2048',
         'photo_right_side' => 'nullable|image|max:2048',
         'is_group' => 'required|boolean', // Determine if it's a group
+        'is_vaccinated' => 'required|in:0,1,2', // Add validation for is_vaccinated
+
     ]);
     
     // Prepare the animal data
     $data = $request->only([
-        'name','color', 'owner_id', 'species_id', 'breed_id', 'birth_date', 'gender', 'medical_condition', 'is_group', 'group_count'
+        'name','color', 'owner_id', 'species_id', 'breed_id', 'birth_date', 'gender', 'medical_condition', 'is_group', 'group_count','is_vaccinated',
     ]);
 
     // Convert is_group to boolean
@@ -1070,6 +1083,7 @@ public function animalStore(Request $request)
             'medical_condition' => $data['medical_condition'],
             'is_group' => $data['is_group'],
             'group_count' => $data['group_count'] ?? 1, // Null for individual animals
+            'is_vaccinated' => $data['is_vaccinated'],
             'photo_front' => $data['photo_front'] ?? null,
             'photo_back' => $data['photo_back'] ?? null,
             'photo_left_side' => $data['photo_left_side'] ?? null,
@@ -1078,14 +1092,14 @@ public function animalStore(Request $request)
 
         // Redirect with success message
         return redirect()->route('rec-animals')
-            ->with('success', 'Animal added successfully.');
+        ->with('message', 'Animal added successfully.');
+    
 
     } catch (\Exception $e) {
         // Handle exceptions and return the error message
         return back()->withErrors(['error' => $e->getMessage()]);
     }
 }
-
 
 public function showEditAnimalForm($animal_id)
 {
@@ -1125,6 +1139,7 @@ public function showEditAnimalForm($animal_id)
     ));
 }
 
+
 public function animalUpdate(Request $request, $animal_id)
 {
     // Determine the validation rules based on is_group
@@ -1140,6 +1155,8 @@ public function animalUpdate(Request $request, $animal_id)
         'photo_left_side' => 'nullable|image|max:2048',
         'photo_right_side' => 'nullable|image|max:2048',
         'is_group' => 'required|boolean', // Add validation for is_group
+        'is_vaccinated' => 'required|in:0,1,2', // Add validation for is_vaccinated
+
     ];
 
     // Apply conditional validation based on 'is_group'
@@ -1163,7 +1180,7 @@ public function animalUpdate(Request $request, $animal_id)
 
     // Prepare the animal data
     $data = $request->only([
-        'name', 'owner_id', 'species_id', 'breed_id', 'birth_date', 'gender', 'medical_condition', 'is_group', 'group_count', 'color'
+        'name', 'owner_id', 'species_id', 'breed_id', 'birth_date', 'gender', 'medical_condition', 'is_group', 'group_count', 'color', 'is_vaccinated',
     ]);
 
     // Handle photo uploads and update the existing photos
@@ -1190,7 +1207,7 @@ public function animalUpdate(Request $request, $animal_id)
 
         // Redirect with success message
         return redirect()->route('rec-animals')
-            ->with('success', 'Animal updated successfully.');
+            ->with('message', 'Animal updated successfully.');
 
     } catch (\Exception $e) {
         // Handle exceptions and return the error message
@@ -1278,6 +1295,7 @@ public function edit_animal($animal_id)
     // Return the view with the data to populate the form
     return view('receptionist.animal-edit', compact('animal', 'species', 'breeds', 'owners', 'vaccines'));
 }
+
 public function update(Request $request, $animal_id)
 {
     // Validate the incoming request data
@@ -1295,6 +1313,8 @@ public function update(Request $request, $animal_id)
         'is_group' => 'required|boolean',
         'group_count' => 'required_if:is_group,true|integer|min:1', // Required if group
         'color' => 'nullable|string|max:255', // Color validation
+        'is_vaccinated' => 'required|in:0,1,2', // Add validation for is_vaccinated
+
     ]);
 
     // Fetch the existing animal record
@@ -1308,19 +1328,19 @@ public function update(Request $request, $animal_id)
         'medical_condition' => $request->medical_condition,
         'is_group' => $request->is_group,
         'color' => $request->color,
+        'is_vaccinated' => $request->is_vaccinated,
+
     ];
 
     // Conditional logic for name and group-specific fields
     if ($request->is_group) {
         $attributes['name'] = $request->name; // Set default group name
         $attributes['gender'] = null; // Groups don't have genders
-
-        // Ensure group_count is never null or zero, always set to 1 if group is true
-        $attributes['group_count'] = max($request->group_count, 1); // Set group_count to 1 if it's 0 or null
+        $attributes['group_count'] = max($request->group_count, 1); // Ensure group count is at least 1
     } else {
         $attributes['name'] = $request->name; // Use the provided name for individuals
         $attributes['gender'] = $request->gender; // Assign gender for individuals
-        $attributes['group_count'] = 1; // Set group_count to 1 if it's an individual
+        $attributes['group_count'] = null; // Reset group count for individuals
     }
 
     // Handle file uploads for photos
@@ -1338,9 +1358,8 @@ public function update(Request $request, $animal_id)
 
     // Redirect to the animal's profile with a success message
     return redirect()->route('rec.profile', ['animal_id' => $animal->animal_id])
-        ->with('success', 'Animal updated successfully.');
+        ->with('message', 'Animal updated successfully.');
 }
-
 
 public function recedit($id)
   {
@@ -1481,4 +1500,126 @@ public function storeTech(Request $request)
 
     return redirect()->route('rec-technicians')->with('success', 'Technician added successfully!');
 }
+
+
+public function settings()
+{
+    return view('receptionist.settings');
+}
+
+public function deleteImage($id)
+{
+    $user = User::findOrFail($id);
+
+    if ($user->profile_image) {
+        // Delete the file from storage
+        Storage::delete($user->profile_image);
+
+        // Remove the path from the database
+        $user->profile_image = null;
+        $user->save();
+    }
+
+    return back()->with('status', 'Profile image deleted successfully!');
+}
+
+
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required',
+            'new_password' => 'required|min:8|confirmed',
+        ]);
+
+        $user = Auth::user();
+
+        // Check if current password matches
+        if (!Hash::check($request->current_password, $user->password)) {
+            return back()->withErrors(['current_password' => 'The current password is incorrect.']);
+        }
+
+        // Update the password
+        $user->update([
+            'password' => Hash::make($request->new_password),
+        ]);
+
+        return back()->with('status', 'Password updated successfully!');
+    }
+
+    public function showVeterinarianProfile(Request $request, $user_id)
+    {
+        // Fetch query parameters for filters
+        $search = $request->input('search');
+        $status = $request->input('status');
+        $transactionType = $request->input('transaction_type');
+        $transactionSubtype = $request->input('transaction_subtype');
+        $date = $request->input('date');
+    
+        // Fetch veterinarian profile
+        $veterinarian = User::with([
+            'vetTransactions.animal.species',
+            'vetTransactions.animal.breed',
+            'vetTransactions.transactionType',
+            'animals.species',
+            'animals.breed',
+            'address.barangay',
+            'designation',
+        ])
+        ->where('users.user_id', $user_id)
+        ->where('users.role', 2)
+        ->first();
+    
+        // Build the transactions query
+        $transactions = Transaction::with([
+            'animal.owner.user',
+            'animal.species',
+            'animal.breed',
+            'transactionType',
+            'transactionSubtype',
+            'technician',
+        ])->where('vet_id', $user_id);
+    
+        // Apply filters
+        if ($search) {
+            $transactions->whereHas('animal.owner.user', function ($query) use ($search) {
+                $query->where('complete_name', 'like', "%$search%");
+            })->orWhereHas('animal', function ($query) use ($search) {
+                $query->where('name', 'like', "%$search%");
+            });
+        }
+    
+        if ($status !== null) {
+            $transactions->where('status', $status);
+        }
+    
+        if ($transactionType) {
+            $transactions->where('transaction_type_id', $transactionType);
+        }
+    
+        if ($transactionSubtype) {
+            $transactions->where('transaction_subtype_id', $transactionSubtype);
+        }
+    
+        if ($date) {
+            $transactions->whereDate('created_at', $date);
+        }
+    
+        // Transaction Count
+        $transactionCount = $transactions->count();
+        // Paginate the transactions
+        $transactions = $transactions->orderBy('created_at', 'desc')->paginate(10);
+    
+        // Fetch other needed data
+        $technicians = VeterinaryTechnician::all();
+        $transactionTypes = TransactionType::all();
+        $transactionSubtypes = TransactionSubtype::all();
+        $vet = User::findOrFail($user_id);
+        $animals = Animal::whereIn('animal_id', $transactions->pluck('animal_id'))->get();
+    
+        // Return the view with the filtered transactions
+        return view('receptionist.veterinarian-profile', compact(
+            'veterinarian', 'transactions', 'technicians', 'transactionTypes', 
+            'transactionSubtypes', 'transactionCount', 'animals', 'vet'
+        ));
+    }
 }

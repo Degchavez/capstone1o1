@@ -21,9 +21,7 @@
                 <p class="text-sm text-gray-500 mt-2"><strong>Transactions Handled:</strong> {{ $transactionCount }}</p>
         
                 <!-- Edit Profile Button -->
-                <a href="{{ route('newvets.edit', $veterinarian->user_id) }}" class="mt-4 inline-block px-6 py-2 text-white bg-blue-500 hover:bg-blue-600 rounded-lg shadow-md text-sm">
-                    Edit Profile
-                </a>
+              
             </div>
         </div>
         
@@ -40,7 +38,7 @@
         <div class="container mx-auto px-4 py-6 bg-gray-50 rounded-lg shadow-lg">
             <!-- Search and Filters Section -->
             <div class="flex items-center justify-between mb-6 bg-white p-4 rounded-lg shadow-md">
-                <form action="{{ route('vet.veterinarian.profile', $veterinarian->user_id) }}" method="GET" id="filtersForm" class="flex items-center space-x-4">
+                <form action="{{ route('rec.veterinarian.profile', $veterinarian->user_id) }}" method="GET" id="filtersForm" class="flex items-center space-x-4">
                     <!-- Search Input -->
                     <div class="flex items-center">
                         <input 
@@ -124,7 +122,7 @@
     
                     <!-- Reset Button -->
                     <div class="flex items-center">
-                        <a href="{{ route('vet.veterinarian.profile', $veterinarian->user_id) }}" class="px-6 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition duration-200">
+                        <a href="{{ route('rec.veterinarian.profile', $veterinarian->user_id) }}" class="px-6 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition duration-200">
                             Reset
                         </a>
                     </div>
@@ -159,7 +157,7 @@
                             <tr class="text-sm border-b hover:bg-blue-50 transition duration-300">
                                 <td class="px-6 py-3 text-start">
     <!-- Owner Profile Image -->
-    <a href="{{ route('vet.profile-owner', ['owner_id' => $animal->owner->owner_id]) }}" class="text-blue-500 hover:text-blue-700 font-bold">
+    <a href="{{ route('rec.profile-owner', ['owner_id' => $animal->owner->owner_id]) }}" class="text-blue-500 hover:text-blue-700 font-bold">
         <img src="{{ $animal->owner->user->profile_image ? Storage::url($animal->owner->user->profile_image) : asset('assets/default-avatar.png') }}" 
              alt="Owner Image" class="w-8 h-8 object-cover rounded-full border-2 border-gray-300 mr-2">
         {{ $animal->owner->user->complete_name ?? 'Unknown Owner' }}
@@ -168,7 +166,7 @@
 
 <td class="px-6 py-3 text-start">
     <!-- Animal Photo Front -->
-    <a href="{{ route('vet.profile', ['animal_id' => $animal->animal_id]) }}" class="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">
+    <a href="{{ route('rec.profile', ['animal_id' => $animal->animal_id]) }}" class="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">
         <img src="{{ $animal->photo_front ? Storage::url($animal->photo_front) : asset('assets/default-avatar.png') }}" 
              alt="Animal Photo" class="w-8 h-8 object-cover rounded-full border-2 border-gray-300 mr-2">
         <strong>{{ $animal->name ?? 'Unknown Animal' }}</strong>
@@ -187,62 +185,29 @@
                                 <td class="px-4 py-2 text-gray-700">{{ $transaction->animal->breed->name ?? 'Unknown Breed' }}</td>
                                 <td class="px-4 py-2 text-gray-700">{{ $transaction->created_at->format('F j, Y') }}</td>
 
-                                <td class="px-4 py-2 text-gray-700">
-                                    <form action="{{ route('updateTechnician', $transaction->transaction_id) }}" method="POST" class="flex items-center" id="technicianForm-{{ $transaction->transaction_id }}">
-                                        @csrf
-                                        @method('PUT')
-                                        <select 
-                                            name="technician_id" 
-                                            class="px-8 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-gray-700 font-medium transition-all duration-200 ease-in-out" 
-                                            onchange="confirmTechnicianChange(event, {{ $transaction->transaction_id }})">
-                                            <option value="" {{ $transaction->technician_id ? '' : 'selected' }}>Select Technician</option>
-                                            @foreach ($technicians as $technician)
-                                                <option value="{{ $technician->technician_id }}" 
-                                                        {{ $transaction->technician_id == $technician->technician_id ? 'selected' : '' }}>
-                                                    {{ $technician->full_name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </form>
-                                </td>
-                                <td class="px-4 py-2 text-gray-700">
-                                    <form action="{{ route('update.details', $transaction->transaction_id) }}" method="POST" class="flex flex-col space-y-2">
-                                        @csrf
-                                        @method('PUT')
-                                
-                                        <textarea 
-                                            name="details" 
-                                            rows="3" 
-                                            class="w-full px-4 py-2 text-gray-700 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm transition-all duration-200 ease-in-out" 
-                                            placeholder="Enter transaction details..."
-                                        >{{ $transaction->details }}</textarea>
-                                
-                                        <button type="submit" class="inline-block px-6 py-2 text-white bg-blue-500 hover:bg-blue-600 rounded-lg shadow-md text-sm">
-                                            Update Details
-                                        </button>
-                                    </form>
-                                </td>
-                                
+                               <!-- Technician Information -->
+<td class="px-4 py-2 text-gray-700">
+    {{ $transaction->technician ? $transaction->technician->full_name : 'No Technician Assigned' }}
+</td>
 
-                                <td class="px-4 py-2 text-gray-700">
-                                    <form action="{{ route('vet.updateStatus', $transaction->transaction_id) }}" method="POST" class="flex items-center" id="statusForm-{{ $transaction->transaction_id }}">
-                                        @csrf
-                                        @method('PUT')
-                                        <select 
-                                            name="status" 
-                                            class="px-8 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-gray-700 font-medium transition-all duration-200 ease-in-out" 
-                                            onchange="confirmStatusChange(event, {{ $transaction->transaction_id }})">
-                                            @if ($transaction->status == 0)
-                                                <option value="0" {{ $transaction->status == 0 ? 'selected' : '' }} disabled>
-                                                    Pending
-                                                </option>
-                                            @endif
-                                            <option value="1" {{ $transaction->status == 1 ? 'selected' : '' }}>Completed</option>
-                                            <option value="2" {{ $transaction->status == 2 ? 'selected' : '' }}>Cancelled</option>
-                                        </select>
-                                    </form>
-                                </td>
-                                
+<!-- Transaction Details -->
+<td class="px-4 py-2 text-gray-700">
+    {{ $transaction->details ?? 'No Details Provided' }}
+</td>
+
+<!-- Transaction Status -->
+<td class="px-4 py-2 text-gray-700">
+    @if ($transaction->status == 0)
+        Pending
+    @elseif ($transaction->status == 1)
+        Completed
+    @elseif ($transaction->status == 2)
+        Cancelled
+    @else
+        Unknown Status
+    @endif
+</td>
+
                                 
                             </tr>
                         @else

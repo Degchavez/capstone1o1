@@ -20,10 +20,13 @@
                     <option value="">Select Animal</option>
 
                     @foreach($animals as $animal)
-                        <option value="{{ $animal->animal_id }}">
-                            {{ $animal->name }} - {{ $animal->species->name }} - {{ $animal->breed->name }}
-                        </option>
-                    @endforeach
+                    <option value="{{ $animal->animal_id }}">
+                        {{ $animal->name }} - 
+                        {{ $animal->species ? $animal->species->name : 'Species not specified' }} - 
+                        {{ $animal->breed ? $animal->breed->name : 'Breed not specified' }}
+                    </option>
+                @endforeach
+                
                 </select>
                 @error('animal_id')
                     <span class="text-red-500 text-sm">{{ $message }}</span>

@@ -1,7 +1,7 @@
 <x-app-layout>
     <div class="container mx-auto p-6">
         <h2 class="text-xl font-bold mb-6 text-center">Update Animal</h2>
-    
+
         <!-- Error Messages -->
         @if ($errors->any())
             <div class="bg-red-100 text-red-700 p-4 rounded mb-6">
@@ -12,14 +12,14 @@
                 </ul>
             </div>
         @endif
-    
+
         <!-- Success Message -->
         @if (session('success'))
             <div class="bg-green-100 text-green-700 p-4 rounded mb-6">
                 {{ session('success') }}
             </div>
         @endif
-    
+
         <!-- Form -->
         <form action="{{ route('owner.NewupdateAnimal', ['owner_id' => $owner_id, 'animal_id' => $animal->animal_id]) }}" 
               method="POST" 
@@ -27,11 +27,15 @@
               class="space-y-4">
             @csrf
             @method('PUT')
-    
-            <!-- Hidden Fields -->
-            <input type="hidden" name="owner_id" value="{{ $owner_id }}">
-            <input type="hidden" name="animal_id" value="{{ $animal->animal_id }}">
-            <input type="hidden" name="is_group" value="{{ $animal->is_group }}">
+
+            <!-- Is it a Group? -->
+            <div>
+                <label for="is_group" class="block text-sm font-medium text-gray-600">Is it a group?</label>
+                <select name="is_group" id="is_group" class="w-full p-2 border border-gray-300 rounded-md">
+                    <option value="0" {{ old('is_group', $animal->is_group) == '0' ? 'selected' : '' }}>No</option>
+                    <option value="1" {{ old('is_group', $animal->is_group) == '1' ? 'selected' : '' }}>Yes</option>
+                </select>
+            </div>
 
             <!-- Name -->
             <div>
@@ -43,7 +47,7 @@
                        class="w-full p-2 border border-gray-300 rounded-md" 
                        required>
             </div>
-    
+
             <!-- Species -->
             <div>
                 <label for="species_id" class="block text-sm font-medium text-gray-600">Species</label>
@@ -59,7 +63,7 @@
                     @endforeach
                 </select>
             </div>
-    
+
             <!-- Breed -->
             <div>
                 <label for="breed_id" class="block text-sm font-medium text-gray-600">Breed</label>
@@ -75,15 +79,14 @@
                     @endforeach
                 </select>
             </div>
-    
+
             <!-- Color -->
             <div>
                 <label for="color" class="block text-sm font-medium text-gray-600">Color</label>
                 <input type="text" name="color" id="color" value="{{ old('color', $animal->color ?? '') }}"
                        class="w-full p-2 border border-gray-300 rounded-md">
             </div>
-            
-    
+
             <!-- Gender (Hidden for Groups) -->
             <div id="gender-container" class="{{ $animal->is_group ? 'hidden' : '' }}">
                 <label for="gender" class="block text-sm font-medium text-gray-600">Gender</label>
@@ -92,7 +95,7 @@
                     <option value="Female" {{ old('gender', $animal->gender) == 'Female' ? 'selected' : '' }}>Female</option>
                 </select>
             </div>
-    
+
             <!-- Group Count (Shown for Groups) -->
             <div id="group-count-container" class="{{ $animal->is_group ? '' : 'hidden' }}">
                 <label for="group_count" class="block text-sm font-medium text-gray-600">Number of Animals</label>
@@ -101,7 +104,7 @@
                        class="w-full p-2 border border-gray-300 rounded-md" 
                        min="1">
             </div>
-    
+
             <!-- Birth Date -->
             <div>
                 <label for="birth_date" class="block text-sm font-medium text-gray-600">Birth Date</label>
@@ -109,17 +112,14 @@
                        value="{{ old('birth_date', optional($animal->birth_date)->format('Y-m-d')) }}" 
                        class="w-full p-2 border border-gray-300 rounded-md">
             </div>
-            
-            
-    
+
             <!-- Medical Condition -->
             <div>
                 <label for="medical_condition" class="block text-sm font-medium text-gray-600">Medical Condition</label>
-                <input type="text" name="medical_condition" id="medical_condition" 
-                       value="{{ old('medical_condition', $animal->medical_condition) }}" 
-                       class="w-full p-2 border border-gray-300 rounded-md">
+                <textarea name="medical_condition" id="medical_condition" 
+                          class="w-full p-2 border border-gray-300 rounded-md">{{ old('medical_condition', $animal->medical_condition) }}</textarea>
             </div>
-    
+
             <!-- Photo Uploads -->
             <div class="space-y-4">
                 @foreach (['front', 'back', 'left_side', 'right_side'] as $position)
@@ -138,13 +138,13 @@
                     </div>
                 @endforeach
             </div>
-    
+
             <!-- Submit Button -->
             <div class="flex justify-between items-center mt-6">
                 <button type="submit" class="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-colors duration-300">
                     Update Animal
                 </button>
-                <a href="{{ route('owners.profile', ['owner_id' => $owner_id]) }}" 
+                <a href="{{ route('owners.profile-owner', ['owner_id' => $owner_id]) }}" 
                    class="bg-gray-500 text-white p-2 rounded-md hover:bg-gray-600 transition-colors duration-300">
                     Cancel
                 </a>
@@ -154,56 +154,40 @@
 
     <!-- Include jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <script>
-        $(document).ready(function () {
-            $('#species_id').change(function () {
+        $(document).ready(function() {
+            // Toggle fields based on the is_group value
+            $('#is_group').change(function() {
+                var isGroup = $(this).val() === '1';
+                $('#gender-container').toggleClass('hidden', isGroup);
+                $('#group-count-container').toggleClass('hidden', !isGroup);
+                $('#name-label').text(isGroup ? 'Group Name' : 'Animal Name');
+            });
+
+            // Trigger change event on page load to set initial state
+            $('#is_group').trigger('change');
+
+            // Load breeds dynamically when species is selected
+            $('#species_id').change(function() {
                 var speciesId = $(this).val();
-        
-                // Clear existing options immediately
-                $('#breed_id').empty().append('<option value="">Select a breed</option>');
-        
                 if (speciesId) {
                     $.ajax({
-                        url: '/get-breed/' + speciesId, // Updated to match the new route
+                        url: '/get-breed/' + speciesId,
                         type: 'GET',
-                        success: function (data) {
-                            if (data && data.breeds) {
-                                // Populate breeds dropdown with new options
-                                $.each(data.breeds, function (index, breed) {
-                                    $('#breed_id').append('<option value="' + breed.id + '">' + breed.name + '</option>');
-                                });
-                            } else {
-                                console.warn("No breeds returned for the selected species.");
-                            }
-                        },
-                        error: function () {
-                            alert('Failed to fetch breeds. Please try again.');
+                        success: function(data) {
+                            $('#breed_id').empty();
+                            $('#breed_id').append('<option value="">Select a breed</option>');
+                            $.each(data.breeds, function(index, breed) {
+                                $('#breed_id').append('<option value="' + breed.id + '">' + breed.name + '</option>');
+                            });
                         }
                     });
+                } else {
+                    $('#breed_id').empty();
+                    $('#breed_id').append('<option value="">Select a breed</option>');
                 }
             });
-        
-            // Handle is_group functionality on page load
-            toggleGroupFields({{ $animal->is_group ? 'true' : 'false' }});
-        
-            function toggleGroupFields(isGroup) {
-                const genderContainer = $('#gender-container');
-                const groupCountContainer = $('#group-count-container');
-                const nameLabel = $('#name-label');
-        
-                if (isGroup) {
-                    nameLabel.text('Group Name');
-                    genderContainer.hide();
-                    groupCountContainer.show();
-                } else {
-                    nameLabel.text('Animal Name');
-                    genderContainer.show();
-                    groupCountContainer.hide();
-                }
-            }
         });
     </script>
-    
-    
 </x-app-layout>

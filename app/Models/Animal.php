@@ -28,6 +28,8 @@ class Animal extends Model
         'photo_left_side',
         'photo_right_side',
         'color',
+        'is_vaccinated',
+
     ];
 
     // Relationship with the Owner model
