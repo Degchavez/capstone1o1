@@ -39,7 +39,7 @@ new #[Layout('layouts.guest')] class extends Component
             <!-- The login form content -->
             <div class="text-center mb-8">
                 <a href="/">
-                    <img class="h-24 w-auto mx-auto" src="{{ asset('assets/1.jpg') }}" alt="Your Logo">
+                    <img class="h-24 w-auto mx-auto hover:scale-105 transition-transform duration-400" src="{{ asset('assets/1.jpg') }}" alt="Your Logo">
                 </a>
             </div>
 
@@ -80,7 +80,7 @@ new #[Layout('layouts.guest')] class extends Component
                         </a>
                     @endif
 
-                    <x-primary-button class="ms-3">
+                    <x-primary-button class="ms-3 hover:bg-green-100 hover:text-green-500">
                         {{ __('Log in') }}
                     </x-primary-button>
                 </div>

@@ -39,7 +39,7 @@
                                 <div class="max-w-5xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
                                     <div class="text-center mb-8">
                                         <a href="/">
-                                            <img class="h-24 w-auto mx-auto" src="{{ asset('assets/1.jpg') }}" alt="Your Logo">
+                                            <img class="h-24 w-24 mx-auto hover:scale-105 transition-transform duration-400" src="{{ asset('assets/1.jpg') }}" alt="Your Logo">
                                         </a>
                                     </div>
                                     <div class="max-w-2xl mx-auto text-center mb-10 lg:mb-14">

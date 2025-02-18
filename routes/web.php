@@ -11,7 +11,6 @@ use App\Http\Controllers\NewBreedController;
 use App\Http\Controllers\NewTransactionsController;
 use App\Http\Controllers\NewTransactionSubtypeController;
 use App\Http\Controllers\NewDesignationController;
-
 use App\Http\Controllers\TransactionsController;
 use App\Http\Controllers\VeterinaryTechnicianController;
 use App\Http\Controllers\VaccineController;
@@ -26,13 +25,11 @@ use App\Http\Controllers\AdminController;
 use App\Http\Livewire\Pages\Auth\Register;
 use App\Models\Breed;
 use App\Models\Designation;
-
 use App\Models\TransactionSubtype;
-    
-
 use App\Livewire\EditUser;
-
 use Illuminate\Support\Facades\Route;
+
+//Routes
 
 Route::get('/', function () {
     $veterinarians = \App\Models\User::where('role', 2)->get(); // Assuming role 2 identifies veterinarians
@@ -96,8 +93,8 @@ Route::group(['middleware' => 'admin'],function(){
    
     // Profile Update Routes (Make sure the paths are distinct)
     Route::prefix('users')->group(function () {
-        Route::get('/{id}/editprofile', [UserController::class, 'profile_edit'])->name('users.profile-edit-form');
-        Route::put('/{id}/updateprofile', [UserController::class, 'profile_update'])->name('users.profile-update');
+    Route::get('/{id}/editprofile', [UserController::class, 'profile_edit'])->name('users.profile-edit-form');
+    Route::put('/{id}/updateprofile', [UserController::class, 'profile_update'])->name('users.profile-update');
         
     });
     //reset password
@@ -112,9 +109,9 @@ Route::group(['middleware' => 'admin'],function(){
 
     //owner profile
 // In your routes file (web.php)
-Route::get('/owners/{owner_id}/user_profile', [OwnerController::class, 'showProfile'])->name('owners.profile-owner');
-//owner transactions
-Route::get('owner/{owner_id}/transactions', [OwnerController::class, 'showTransactions'])->name('owner.transactions');
+    Route::get('/owners/{owner_id}/user_profile', [OwnerController::class, 'showProfile'])->name('owners.profile-owner');
+    //owner transactions
+    Route::get('owner/{owner_id}/transactions', [OwnerController::class, 'showTransactions'])->name('owner.transactions');
 
 
     //add animal
@@ -122,36 +119,36 @@ Route::get('owner/{owner_id}/transactions', [OwnerController::class, 'showTransa
     Route::post('/owners/{owner_id}/add-animal', [AdminController::class, 'store'])->name('owner.addAnimal');
 
 //GET Breeds
-Route::get('/get-breeds/{species_id}', [AdminController::class, 'getBreeds'])->name('getBreeds');
+    Route::get('/get-breeds/{species_id}', [AdminController::class, 'getBreeds'])->name('getBreeds');
 
-//get transaction types
-Route::get('/get-transaction-subtypes/{transactionTypeId}', [AdminController::class, 'getTransactionSubtypes']);
+    //get transaction types
+    Route::get('/get-transaction-subtypes/{transactionTypeId}', [AdminController::class, 'getTransactionSubtypes']);
 
 
-Route::delete('owner/animal/{animal_id}/delete', [OwnerController::class, 'deleteAnimal'])->name('owner.deleteAnimal');
+    Route::delete('owner/animal/{animal_id}/delete', [OwnerController::class, 'deleteAnimal'])->name('owner.deleteAnimal');
 
-// Define the update route with the owner_id and animal_id parameters
-Route::get('/owner/{owner_id}/animal/{animal_id}/edit', [OwnerController::class, 'edit'])->name('owner.editAnimal');
+    // Define the update route with the owner_id and animal_id parameters
+    Route::get('/owner/{owner_id}/animal/{animal_id}/edit', [OwnerController::class, 'edit'])->name('owner.editAnimal');
 
-Route::put('/owner/{owner_id}/animal/{animal_id}/update', [OwnerController::class, 'updateAnimal'])->name('owner.updateAnimal');
+    Route::put('/owner/{owner_id}/animal/{animal_id}/update', [OwnerController::class, 'updateAnimal'])->name('owner.updateAnimal');
 
-//add transaction
-Route::get('/owner/{owner_id}/add-transaction', [OwnerController::class, 'addTransactionForm'])->name('owner.addTransactionForm');
-Route::post('/owner/{owner_id}/add-transaction', [OwnerController::class, 'storeTransaction'])->name('owner.addTransaction');
+    //add transaction
+    Route::get('/owner/{owner_id}/add-transaction', [OwnerController::class, 'addTransactionForm'])->name('owner.addTransactionForm');
+    Route::post('/owner/{owner_id}/add-transaction', [OwnerController::class, 'storeTransaction'])->name('owner.addTransaction');
 
-//delete transaction
-Route::delete('/transaction/{transaction_id}', [OwnerController::class, 'deleteTransaction'])->name('transaction.delete');
+    //delete transaction
+    Route::delete('/transaction/{transaction_id}', [OwnerController::class, 'deleteTransaction'])->name('transaction.delete');
 
-//edit transaction
-Route::get('/transaction/{transaction_id}/edit', [OwnerController::class, 'editTransactionForm'])->name('owner.editTransactionForm');
-Route::put('/transaction/{transaction_id}/update', [OwnerController::class, 'updateTransaction'])->name('owner.updateTransaction');
+    //edit transaction
+    Route::get('/transaction/{transaction_id}/edit', [OwnerController::class, 'editTransactionForm'])->name('owner.editTransactionForm');
+    Route::put('/transaction/{transaction_id}/update', [OwnerController::class, 'updateTransaction'])->name('owner.updateTransaction');
 
-//GET TRANSACTION
-Route::get('/get-transaction/{transaction_id}', [OwnerController::class, 'getTransaction']);
+    //GET TRANSACTION
+    Route::get('/get-transaction/{transaction_id}', [OwnerController::class, 'getTransaction']);
 
-Route::get('/get-subtypes-for-type/{transactionTypeId}', [OwnerController::class, 'getSubtypesForType']);
+    Route::get('/get-subtypes-for-type/{transactionTypeId}', [OwnerController::class, 'getSubtypesForType']);
 
-Route::prefix('admin')->group(function () {
+    Route::prefix('admin')->group(function () {
     Route::get('/users/{id}/editprofile', [AdminController::class, 'owner_edit'])->name('admin.owner-edit-form');
     Route::put('/users/{id}/updateprofile', [AdminController::class, 'owner_update'])->name('admin.owner-form-update');
     Route::delete('/removeTransaction/{transaction_id}', [OwnerController::class, 'removeTransaction'])->name('transaction.remove');

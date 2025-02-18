@@ -36,13 +36,14 @@ new class extends Component
                                             ? route('receptionist-dashboard') 
                                             : route('dashboard'))))) 
                             : route('login') }}">
-                        <img src="{{ asset('assets/1.jpg') }}" alt="Application Logo" class="h-12 w-auto" />
+                        <img src="{{ asset('assets/1.jpg') }}" alt="Application Logo" class="h-12 w-auto hover:scale-105 transition-transform duration-400" />
                     </a>
                 </div>
 
                 <!-- Navigation Links -->
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                <!-- Admin Links -->
+                <div class="flex flex-wrap items-center space-x-4 sm:space-x-8 sm:ms-10 hidden sm:flex hover:scale-105 transition-transform duration-400">
+            
+                                                  <!-- Admin Links -->
 
                     @if(auth()->check() && auth()->user()->role == 0) <!-- Assuming 0 is the admin role -->
                         <x-nav-link :href="route('admin-dashboard')" :active="request()->routeIs('admin-dashboard')" wire:navigate>

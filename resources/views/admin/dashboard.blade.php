@@ -1,38 +1,38 @@
 <x-app-layout>
     <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto space-y-10">
         <!-- Statistics Section -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            <div class="bg-blue-500 text-white p-6 rounded-lg shadow-md">
-                <h3 class="text-2xl font-semibold">{{ $totalOwners }}</h3>
-                <p class="mt-2 text-sm">Total Owners</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 ">
+            <div class="bg-blue-500 text-white p-6 rounded-lg shadow-md hover:scale-105 transition-transform duration-400">
+                <h3 class="text-2xl font-semibold text-center">{{ $totalOwners }}</h3>
+                <p class="mt-2 text-sm text-center">Total Owners</p>
             </div>
-            <div class="bg-green-500 text-white p-6 rounded-lg shadow-md">
-                <h3 class="text-2xl font-semibold">{{ $successfulTransactions }}</h3>
-                <p class="mt-2 text-sm">Successful Transactions</p>
+            <div class="bg-green-500 text-white p-6 rounded-lg shadow-md hover:scale-105 transition-transform duration-400">
+                <h3 class="text-2xl font-semibold text-center ">{{ $successfulTransactions }}</h3>
+                <p class="mt-2 text-sm text-center">Successful Transactions</p>
             </div>
-            <div class="bg-yellow-500 text-white p-6 rounded-lg shadow-md">
-                <h3 class="text-2xl font-semibold">{{ $totalAnimals }}</h3>
-                <p class="mt-2 text-sm">Total Animals</p>
+            <div class="bg-yellow-500 text-white p-6 rounded-lg shadow-md hover:scale-105 transition-transform duration-400">
+                <h3 class="text-2xl font-semibold text-center">{{ $totalAnimals }}</h3>
+                <p class="mt-2 text-sm text-center">Total Animals</p>
             </div>
         </div>
 
         <!-- Filters and Search Section -->
         <div class="flex flex-wrap justify-between gap-4 mb-6">
             <!-- Search Input -->
-            <div>
+            <div >
                 <form method="GET" action="{{ route('admin-dashboard') }}">
-                    <input type="text" name="search" value="{{ request('search') }}" 
+                    <input class="hover:scale-105 transition-transform duration-400 rounded-lg" name="search" value="{{ request('search') }}" 
                            class="p-2 border rounded-lg shadow-sm"
                            placeholder="Search by Owner or Animal">
-                    <button type="submit" class="px-4 py-2 text-white bg-blue-500 rounded-lg">Search</button>
+                    <button type="submit" class="px-4 py-2 text-white bg-green-500 hover:bg-green-700 rounded-lg hover:scale-105 transition-transform duration-400">Search</button>
                 </form>
             </div>
 
             <!-- Filters -->
-            <div class="flex gap-4">
+            <div class="flex gap-4 ">
                 <!-- Status Filter -->
                 <form method="GET" action="{{ route('admin-dashboard') }}">
-                    <select name="status" class="p-2 border rounded-lg" onchange="this.form.submit()">
+                    <select name="status" class="p-2 border rounded-lg hover:scale-105 transition-transform duration-400" onchange="this.form.submit()">
                         <option value="">All Status</option>
                         @foreach($statuses as $key => $status)
                             <option value="{{ $key }}" {{ request('status') == $key ? 'selected' : '' }}>
@@ -44,7 +44,7 @@
 
                 <!-- Veterinarian Filter -->
                 <form method="GET" action="{{ route('admin-dashboard') }}">
-                    <select name="veterinarian" class="p-2 border rounded-lg" onchange="this.form.submit()">
+                    <select name="veterinarian" class="p-2 border rounded-lg hover:scale-105 transition-transform duration-400" onchange="this.form.submit()">
                         <option value="">All Veterinarians</option>
                         @foreach($veterinarians as $veterinarian)
                             <option value="{{ $veterinarian->user_id }}" 
@@ -57,7 +57,7 @@
 
                 <!-- Technician Filter -->
                 <form method="GET" action="{{ route('admin-dashboard') }}">
-                    <select name="technician" class="p-2 border rounded-lg" onchange="this.form.submit()">
+                    <select name="technician" class="p-2 border rounded-lg hover:scale-105 transition-transform duration-400" onchange="this.form.submit()">
                         <option value="">All Technicians</option>
                         @foreach($technicians as $technician)
                             <option value="{{ $technician->technician_id }}" 
@@ -72,14 +72,14 @@
 
         <!-- Recent Transactions Section -->
 
-      <div class="overflow-x-auto bg-white rounded-lg shadow">
+      <div class="overflow-x-auto bg-white rounded-lg shadow ">
     <!-- Title -->
     <div class="px-6 py-4">
-        <h2 class="text-xl font-bold text-gray-700">Recent Transactions</h2>
+        <h2 class="text-xl font-bold text-gray-700 hover:text-green-500">Recent Transactions</h2>
     </div>
 
     <table class="min-w-full text-sm text-left text-gray-700">
-        <thead class="bg-gray-100 text-gray-600 uppercase text-xs">
+        <thead class="bg-gray-100 text-gray-600 uppercase text-xs hover:scale-105 transition-transform">
             <tr>
                 <th class="px-6 py-4"></th>
                 <th class="px-6 py-4">Owner</th>
@@ -93,12 +93,12 @@
         </thead>
         <tbody>
             @forelse ($recentTransactions as $transaction)
-                <tr class="border-b hover:bg-gray-50">
+                <tr class="border-b hover:bg-gray-50 hover:scale-105 transition-transform duration-400">
                     <td class="px-6 py-4">
                         @if($transaction->owner->user->profile_image)
-                            <img src="{{ asset('storage/' . $transaction->owner->user->profile_image) }}" alt="Profile Image" class="w-10 h-10 rounded-full">
+                            <img src="{{ asset('storage/' . $transaction->owner->user->profile_image) }}" alt="Profile Image" class="w-10 h-10 rounded-full hover:scale-105">
                         @else
-                        <img src="{{asset('assets/default-avatar.png') }}" class="w-12 h-12 rounded-full" alt="Profile">
+                        <img src="{{asset('assets/default-avatar.png') }}" class="w-12 h-12 rounded-full hover:scale-105 transition-transform duration-400" alt="Profile">
                         @endif
                     </td>
                     <td class="px-4 py-3 text-sm">
