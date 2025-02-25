@@ -12,6 +12,7 @@ use Illuminate\Validation\Rules\Password;
 use App\Models\Barangay;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Designation;
+use App\Models\Category;
 
 use App\Models\Owner;
 use App\Models\Address;
@@ -83,39 +84,42 @@ class UserController extends Controller
     }
     public function edit($id)
     {
-        $user = User::with('address', 'designation')->findOrFail($id); // Fetch the user with their address and designation
-        $barangays = Barangay::all(); // Fetch all barangays
-        $designations = Designation::all(); // Fetch all designations
-        return view('admin.edit', compact('user', 'barangays', 'designations')); // Pass data to the view
+        $user = User::with(['owner', 'address', 'categories'])->findOrFail($id);
+        
+        return view('admin.edit', [
+            'user' => $user,
+            'barangays' => Barangay::all(),
+            'designations' => Designation::all(),
+            'categories' => Category::all(),
+        ]);
     }
     
 
     public function update(Request $request, $id)
     {
+        $user = User::findOrFail($id);
+        
         $request->validate([
             'complete_name' => 'required|string|max:100',
             'role' => 'required|integer',
             'contact_no' => 'required|string|max:15',
             'gender' => 'required|string|max:10',
-            'birth_date' => ['nullable', 'date', 'before_or_equal:today'], // Ensure birthdate is not in the future
+            'birth_date' => ['nullable', 'date', 'before_or_equal:today'],
             'status' => 'required|integer',
-            'email' => 'required|email|max:100|unique:users,email,' . $id . ',user_id',
+            'email' => 'required|email|max:100|unique:users,email,' . $user->user_id . ',user_id',
             'barangay_id' => 'required|exists:barangays,id',
             'street' => 'nullable|string|max:255',
-            'profile_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048', // Added validation for image
-            'designation_id' => 'nullable|exists:designations,designation_id', // Ensure designation is selected
+            'profile_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'designation_id' => 'nullable|exists:designations,designation_id',
+            'selectedCategories' => 'required_if:role,1|array',
+            'civil_status' => 'required_if:role,1|string|nullable',
         ]);
-    
-        $user = User::findOrFail($id);
     
         // Handle profile image upload if a file is provided
         if ($request->hasFile('profile_image')) {
-            // Delete old image if it exists
             if ($user->profile_image) {
                 Storage::disk('public')->delete($user->profile_image);
             }
-    
-            // Store the new image
             $imagePath = $request->file('profile_image')->store('profile_images', 'public');
             $user->profile_image = $imagePath;
         }
@@ -129,20 +133,35 @@ class UserController extends Controller
             'birth_date',
             'status',
             'email',
-            'designation_id', // Update the designation_id
+            'designation_id',
         ]));
     
         // Update or create the address
         $user->address()->updateOrCreate(
-            ['user_id' => $user->user_id], // Condition to find the address
-            $request->only(['barangay_id', 'street']) // Address fields to update
+            ['user_id' => $user->user_id],
+            $request->only(['barangay_id', 'street'])
         );
     
-        // Update or create the owner's data
-        $user->owner()->updateOrCreate(
-            ['user_id' => $user->user_id], // Match condition
-            $request->only(['civil_status', 'category']) + ['permit' => 1] // Data to update, with permit added
-        );
+        // Handle owner-specific data if role is owner (1)
+        if ($request->role == 1) {
+            // Update or create owner data
+            $user->owner()->updateOrCreate(
+                ['user_id' => $user->user_id],
+                [
+                    'civil_status' => $request->civil_status,
+                    'permit' => 1
+                ]
+            );
+    
+            // Update categories
+            $user->categories()->sync($request->selectedCategories ?? []);
+        } else {
+            // If user is not an owner, remove owner data and category associations
+            if ($user->owner) {
+                $user->owner->delete();
+            }
+            $user->categories()->detach();
+        }
     
         return redirect()->route('admin-users')
             ->with('message', 'User details updated successfully.');

@@ -88,7 +88,7 @@ Route::group(['middleware' => 'admin'],function(){
 
     // Edit User Route
     Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit-form');
-    Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
+    Route::put('/users/{id}/update', [UserController::class, 'update'])->name('users.update');
 
    
     // Profile Update Routes (Make sure the paths are distinct)
