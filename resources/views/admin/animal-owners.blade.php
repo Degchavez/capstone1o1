@@ -163,7 +163,7 @@
                                                      alt="">
                                             </div>
                                             <div class="ml-4">
-                                                <div class="text-sm font-medium text-gray-900">
+                                                <div class="text-sm font-medium text-blue-900">
                                                     <a href="{{ route('owners.profile-owner', $owner->owner_id) }}" 
                                                        class="hover:text-green-600 transition-colors duration-200">
                                                         {{ $owner->complete_name }}

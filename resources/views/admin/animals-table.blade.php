@@ -144,7 +144,7 @@
                                                          alt="Animal Photo">
                                                 </div>
                                                 <div class="ml-4">
-                                                    <div class="text-sm font-medium text-gray-900">
+                                                    <div class="text-sm font-medium text-blue-900">
                                                         <a href="{{ route('animals.profile', ['animal_id' => $animal->animal_id]) }}" 
                                                            class="hover:text-green-600 transition-colors duration-200">
                                                             {{ $animal->name }}
@@ -157,7 +157,7 @@
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900">
+                                            <div class="text-sm font-medium text-blue-900">
                                                 <a href="{{ route('owners.profile-owner', ['owner_id' => $animal->owner->owner_id]) }}" 
                                                    class="hover:text-green-600 transition-colors duration-200">
                                                     {{ $animal->owner->user->complete_name }}
@@ -178,7 +178,7 @@
                                                     $latestTransaction = $animal->transactions->sortByDesc('created_at')->first();
                                                 @endphp
                                                 @if($latestTransaction && $latestTransaction->vet)
-                                                    <div class="text-sm text-gray-900">
+                                                    <div class="text-sm text-blue-900">
                                                         <a href="{{ route('admin.veterinarian.profile', $latestTransaction->vet->user_id) }}" 
                                                            class="hover:text-green-600 transition-colors duration-200">
                                                             {{ $latestTransaction->vet->complete_name }}

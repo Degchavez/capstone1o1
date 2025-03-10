@@ -143,7 +143,7 @@
                                                          alt="">
                                                 </div>
                                                 <div class="ml-4">
-                                                    <div class="text-sm font-medium text-gray-900">
+                                                    <div class="text-sm font-bold  text-blue-900">
                                                         <a href="{{ $user->user_id === auth()->user()->user_id 
                                                             ? route('users.nav-profile', ['id' => auth()->user()->user_id]) 
                                                             : route('users.profile-form', $user->user_id) }}" 
