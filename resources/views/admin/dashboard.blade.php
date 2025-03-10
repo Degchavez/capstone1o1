@@ -79,7 +79,7 @@
     </div>
 
     <table class="min-w-full text-sm text-left text-gray-700">
-        <thead class="bg-gray-100 text-gray-600 uppercase text-xs hover:scale-105 transition-transform">
+        <thead class="bg-gray-100 text-gray-600 uppercase text-xs ">
             <tr>
                 <th class="px-6 py-4"></th>
                 <th class="px-6 py-4">Owner</th>
@@ -93,7 +93,7 @@
         </thead>
         <tbody>
             @forelse ($recentTransactions as $transaction)
-                <tr class="border-b hover:bg-gray-50 hover:scale-105 transition-transform duration-400">
+                <tr class="border-b hover:bg-gray-50 ">
                     <td class="px-6 py-4">
                         @if($transaction->owner->user->profile_image)
                             <img src="{{ asset('storage/' . $transaction->owner->user->profile_image) }}" alt="Profile Image" class="w-10 h-10 rounded-full hover:scale-105">
