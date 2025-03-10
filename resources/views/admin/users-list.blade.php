@@ -1,261 +1,268 @@
 <x-app-layout>
     <div>
         <!-- Page Wrapper -->
-        <div class="max-w-full px-6 py-6 mx-auto">
-            <!-- Success Message -->
-            @if (session()->has('message'))
-            <div class="mt-4 bg-green-100 border border-green-400 text-green-800 text-sm rounded-lg p-4" role="alert">
-                <span class="font-semibold">Success:</span> {{ session('message') }}
-            </div>
-        @endif
-        
-        @if (session()->has('error'))
-            <div class="mt-4 bg-red-100 border border-red-400 text-red-800 text-sm rounded-lg p-4" role="alert">
-                <span class="font-semibold">Error:</span> {{ session('error') }}
-            </div>
-        @endif
-         
+        <div class="min-h-screen bg-gray-50">
+            <div class="max-w-[95%] mx-auto py-8">
+                <!-- Alert Messages -->
+                @if (session()->has('message'))
+                    <div class="mb-4 flex items-center p-4 bg-green-50 border-l-4 border-green-500 rounded-r-lg" role="alert">
+                        <svg class="h-5 w-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="text-green-800">{{ session('message') }}</span>
+                    </div>
+                @endif
+                
+                @if (session()->has('error'))
+                    <div class="mb-4 flex items-center p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg" role="alert">
+                        <svg class="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        <span class="text-red-800">{{ session('error') }}</span>
+                    </div>
+                @endif
 
-            
-
-            <!-- Page Header -->
-            <div class="text-center mt-8">
-                <h2 class="text-3xl font-bold text-gray-800 dark:text-white">
-                    <span style="color: #006400;">Users</span> Management
-                </h2>
-                <p class="text-lg text-gray-500 dark:text-gray-300 mt-2">
-                    Add, edit, or manage users from this section.
-                </p>
-            </div>
-            
-            <br>
-
-            <!-- Add User and Reset Button Section -->
-            <div class="flex items-center justify-between gap-4 mb-6">
-                <div class="flex items-center gap-4">
-                    <!-- Add User Button aligned to the left -->
-                    <a href="/admin/create/users" class="bg-green-600 text-white text-sm font-semibold px-6 py-2 rounded-lg hover:bg-green-700 focus:outline-none shadow-md transition duration-200">
-                        + Add User
-                    </a>
-                    <a href="{{ route('admin-users') }}" class="bg-gray-300 text-gray-800 text-sm font-semibold px-6 py-2 rounded-lg hover:bg-gray-400 focus:outline-none shadow-md transition duration-200">
-                        Reset
-                    </a>
+                <!-- Page Header -->
+                <div class="mb-8">
+                    <h1 class="text-3xl font-bold text-gray-900">
+                        Users Management
+                    </h1>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Manage and monitor all users in the system
+                    </p>
                 </div>
-            </div>
 
-            <!-- Filters Section -->
-            <div class="flex flex-wrap justify-between gap-2 items-center mb-4">
-                <!-- Filter Form -->
-                <form method="GET" action="{{ route('admin-users') }}" class="flex flex-wrap items-center gap-6 w-full sm:w-auto" id="filter-form">
-                    <div class="flex items-center gap-4">
-                        <input type="text" name="search" class="form-input w-52 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:text-neutral-200 shadow-sm hover:border-gray-400 transition-all" placeholder="Search by name, email, or contact" value="{{ request('search') }}" onchange="this.form.submit()">
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center space-x-3">
+                        <a href="/admin/create/users" class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            Add User
+                        </a>
+                        <a href="{{ route('admin-users') }}" class="inline-flex items-center px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            Reset Filters
+                        </a>
                     </div>
-                    <div class="flex items-center gap-4">
-                        <select name="gender" class="form-select w-40 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:text-neutral-200 shadow-sm hover:border-gray-400 transition-all" onchange="this.form.submit()">
-                            <option value="">All Genders</option>
-                            <option value="male" {{ request('gender') == 'male' ? 'selected' : '' }}>Male</option>
-                            <option value="female" {{ request('gender') == 'female' ? 'selected' : '' }}>Female</option>
-                        </select>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <select name="role" class="form-select w-40 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:text-neutral-200 shadow-sm hover:border-gray-400 transition-all" onchange="this.form.submit()">
-                            <option value="">All Roles</option>
-                            <option value="zero" {{ request('role') === 'zero' ? 'selected' : '' }}>Admin</option>
-                            <option value="1" {{ request('role') === '1' ? 'selected' : '' }}>Animal Owner</option>
-                            <option value="2" {{ request('role') === '2' ? 'selected' : '' }}>Veterinarian</option>
-                            <option value="3" {{ request('role') === '3' ? 'selected' : '' }}>Veterinary Receptionist</option>
-                        </select>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <select name="status" class="form-select w-40 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:text-neutral-200 shadow-sm hover:border-gray-400 transition-all {{ request('status') === 'zero' ? 'bg-yellow-200' : (request('status') === '1' ? 'bg-green-200' : (request('status') === '2' ? 'bg-red-200' : '')) }}" onchange="this.form.submit()">
-                            <option value="">All Statuses</option>
-                            <option value="zero" {{ request('status') === 'zero' ? 'selected' : '' }} class="bg-yellow-200">Pending</option>
-                            <option value="1" {{ request('status') === '1' ? 'selected' : '' }} class="bg-green-200">Active</option>
-                            <option value="2" {{ request('status') === '2' ? 'selected' : '' }} class="bg-red-200">Disabled</option>
-                        </select>
-                    </div>
-                    
-                    <div class="flex items-center gap-2">
-                        <input type="date" name="fromDate" class="form-input w-40 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:text-neutral-200 shadow-sm hover:border-gray-400 transition-all" value="{{ request('fromDate') }}" onchange="this.form.submit()">
-                    </div>
-                    TO
-                    <div class="flex items-center gap-2">
-                        <input type="date" name="toDate" class="form-input w-40 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:text-neutral-200 shadow-sm hover:border-gray-400 transition-all" value="{{ request('toDate') }}" onchange="this.form.submit()">
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <select name="barangay_id" class="form-select w-40 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:text-neutral-200 shadow-sm hover:border-gray-400 transition-all" onchange="this.form.submit()">
-                            <option value="">All Barangays</option>
-                            @foreach ($barangays as $barangay)
-                                <option value="{{ $barangay->id }}" {{ request('barangay_id') == $barangay->id ? 'selected' : '' }}>
-                                    {{ $barangay->barangay_name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                </form>
-            </div>
+                </div>
+
+                <!-- Filters Section -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6">
+                    <form method="GET" action="{{ route('admin-users') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4" id="filter-form">
+                        <!-- Search -->
+                        <div class="col-span-1 sm:col-span-2 xl:col-span-1">
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Search</label>
+                            <div class="relative">
+                                <input type="text" name="search" 
+                                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                       placeholder="Name, email, or contact" 
+                                       value="{{ request('search') }}">
+                                <svg class="absolute left-3 top-2.5 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Role -->
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Role</label>
+                            <select name="role" class="w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" onchange="this.form.submit()">
+                                <option value="">All Roles</option>
+                                <option value="zero" {{ request('role') === 'zero' ? 'selected' : '' }}>Admin</option>
+                                <option value="1" {{ request('role') === '1' ? 'selected' : '' }}>Animal Owner</option>
+                                <option value="2" {{ request('role') === '2' ? 'selected' : '' }}>Veterinarian</option>
+                                <option value="3" {{ request('role') === '3' ? 'selected' : '' }}>Receptionist</option>
+                            </select>
+                        </div>
+
+                        <!-- Status -->
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Status</label>
+                            <select name="status" class="w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" onchange="this.form.submit()">
+                                <option value="">All Statuses</option>
+                                <option value="zero" {{ request('status') === 'zero' ? 'selected' : '' }}>Pending</option>
+                                <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Active</option>
+                                <option value="2" {{ request('status') === '2' ? 'selected' : '' }}>Disabled</option>
+                            </select>
+                        </div>
+
+                        <!-- Gender -->
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Gender</label>
+                            <select name="gender" class="w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" onchange="this.form.submit()">
+                                <option value="">All Genders</option>
+                                <option value="male" {{ request('gender') == 'male' ? 'selected' : '' }}>Male</option>
+                                <option value="female" {{ request('gender') == 'female' ? 'selected' : '' }}>Female</option>
+                            </select>
+                        </div>
+
+                        <!-- Date Range -->
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">From Date</label>
+                            <input type="date" name="fromDate" 
+                                   class="w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" 
+                                   value="{{ request('fromDate') }}"
+                                   onchange="this.form.submit()">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">To Date</label>
+                            <input type="date" name="toDate" 
+                                   class="w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" 
+                                   value="{{ request('toDate') }}"
+                                   onchange="this.form.submit()">
+                        </div>
+                    </form>
+                </div>
 
                 <!-- Users Table -->
-                <div class="overflow-x-auto">
-                    <table class="min-w-full table-auto bg-white dark:bg-neutral-800 border border-gray-300 rounded-lg shadow-md">
-                        <thead>
-                            <tr class="bg-gray-100 dark:bg-neutral-900 text-gray-600 dark:text-gray-300">
-                                <th class="px-6 py-3 text-left text-sm font-semibold">Profile</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold">Name</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold">Position</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold">Address</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold">Contact</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold">Gender</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold">Birthdate</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold">Status</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold">Email</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold">Password</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-300 dark:divide-gray-700">
-                            @if (count($users) > 0)
-                                @foreach ($users as $user)
-                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                        <td class="px-4 py-3">
-                                            <img src="{{ $user->profile_image ? asset('storage/' . $user->profile_image) : asset('assets/default-avatar.png') }}" class="w-12 h-12 rounded-full" alt="Profile">
-                                        </td>
-                                        <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                                            <b>
-                                                <a 
-                                                    href="{{ $user->user_id === auth()->user()->user_id 
-                                                        ? route('users.nav-profile', ['id' => auth()->user()->user_id]) 
-                                                        : route('users.profile-form', $user->user_id) }}" 
-                                                    class="text-blue-500 hover:text-blue-700">
-                                                    {{ $user->complete_name }}
-                                                </a>
-                                            </b>
-                                        </td>
-                                        
-
-                                        <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                                            @php
-                                                $roles = [
-                                                    0 => 'Admin',
-                                                    1 => 'Animal Owner',
-                                                    2 => 'Veterinarian',
-                                                    3 => 'Veterinary Receptionist',
-                                                ];
-                                                $roleName = $roles[$user->role] ?? 'Unknown';
-                                            @endphp
-                                            
-                                            {{ $roleName }}
-                                        
-                                            @if ($user->role === 2 && $user->designation) 
-                                                <!-- Display the designation if the user is a Veterinarian -->
-                                                - {{ $user->designation->name }}
-                                            @endif
-                                        </td>
-                                        
-                                        <td>
-                                            <!-- Display Barangay Name from Address -->
-                                            @if ($user->address && $user->address->barangay)
-                                                {{ $user->address->barangay->barangay_name }}
-                                            @else
-                                                N/A
-                                            @endif
-                                        </td>
-
-                                        <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{{ $user->contact_no }}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{{ ucfirst($user->gender) }}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{{ $user->birth_date->format('F j, Y') }}</td>
-                                        <td class="px-4 py-3 text-sm {{ 
-                                            $user->status === 0 ? 'text-yellow-500' : 
-                                            ($user->status === 1 ? 'text-green-500' : 
-                                            ($user->status === 2 ? 'text-red-500' : 'text-gray-500')) }} dark:text-gray-300">
-                                            @php
-                                                $status = [
-                                                    0 => 'Pending',
-                                                    1 => 'Active',
-                                                    2 => 'Disabled',
-                                                ];
-                                                $statusName = $status[$user->status] ?? 'Unknown';
-                                            @endphp
-                                            {{ $statusName }}
-                                        </td>
-                                        
-                                        <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{{ $user->email }}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                                         <!-- Reset Password Button -->
-                                         <form action="{{ route('users.reset-password', $user->user_id) }}" method="POST" class="inline-block" onsubmit="return confirmReset()">
-                                            @csrf
-                                            <button type="submit" 
-                                                    class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 rounded-lg shadow-md transition-all duration-200 transform hover:scale-105">
-                                                <!-- Reset Icon -->
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20v-8m0 0H4m8 0h8M12 4v8" />
-                                                </svg>
-                                                Reset
-                                            </button>
-                                        </form>
-                                        
-                                        
-                                    </td>
-                                    <td class="px-4 py-3 text-sm">
-                                        <div class="flex flex-col space-y-2">
-                                            @if ($user->user_id !== auth()->id())
-                                                <!-- Update Button at the top -->
-                                                <a href="{{ route('users.edit-form', $user->user_id) }}" 
-                                                   class="inline-flex items-center px-2 py-1 text-xs font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-200">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
-                                                    </svg>
-                                                    Update
-                                                </a>
-                                    
-                                                <!-- Delete Button at the bottom -->
-                                                <form action="{{ route('users.destroy', $user->user_id) }}" method="POST" class="inline-block">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" 
-                                                        class="inline-flex items-center px-2 py-1 text-xs font-semibold text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition duration-200"
-                                                        onclick="return confirm('Are you sure you want to delete this user? This action cannot be undone.')">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4m16 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
-                                                        Delete
-                                                    </button>
-                                                </form>
-                                            @else
-                                                <!-- Placeholder or message for own profile -->
-                                                <span class="text-gray-500">No actions available</span>
-                                            @endif
-                                        </div>
-                                    </td>
-                                    
-                                    
-                                        
-                                        
-                                        
-                                        
-                                    </tr>
-                                @endforeach
-                            @else
-                                <tr>
-                                    <td colspan="10" class="px-4 py-3 text-center text-gray-500">No users found.</td>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr class="bg-gray-50">
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact Info</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
-                            @endif
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                @forelse ($users as $user)
+                                    <tr class="hover:bg-gray-50 transition-colors duration-200">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10">
+                                                    <img class="h-10 w-10 rounded-full object-cover" 
+                                                         src="{{ $user->profile_image ? asset('storage/' . $user->profile_image) : asset('assets/default-avatar.png') }}" 
+                                                         alt="">
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900">
+                                                        <a href="{{ $user->user_id === auth()->user()->user_id 
+                                                            ? route('users.nav-profile', ['id' => auth()->user()->user_id]) 
+                                                            : route('users.profile-form', $user->user_id) }}" 
+                                                           class="hover:text-green-600 transition-colors duration-200">
+                                                            {{ $user->complete_name }}
+                                                        </a>
+                                                    </div>
+                                                    <div class="text-sm text-gray-500">{{ $user->email }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">
+                                                @php
+                                                    $roles = [
+                                                        0 => 'Admin',
+                                                        1 => 'Animal Owner',
+                                                        2 => 'Veterinarian',
+                                                        3 => 'Receptionist'
+                                                    ];
+                                                @endphp
+                                                {{ $roles[$user->role] ?? 'Unknown' }}
+                                            </div>
+                                            @if ($user->role === 2 && $user->designation)
+                                                <div class="text-sm text-gray-500">{{ $user->designation->name }}</div>
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">{{ $user->contact_no }}</div>
+                                            <div class="text-sm text-gray-500">
+                                                {{ $user->address && $user->address->barangay ? $user->address->barangay->barangay_name : 'N/A' }}
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                                {{ $user->status === 0 ? 'bg-yellow-100 text-yellow-800' : 
+                                                   ($user->status === 1 ? 'bg-green-100 text-green-800' : 
+                                                   'bg-red-100 text-red-800') }}">
+                                                @php
+                                                    $status = [0 => 'Pending', 1 => 'Active', 2 => 'Disabled'];
+                                                @endphp
+                                                {{ $status[$user->status] ?? 'Unknown' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            @if ($user->user_id !== auth()->id())
+                                                <div class="flex items-center space-x-2">
+                                                    <form action="{{ route('users.reset-password', $user->user_id) }}" 
+                                                          method="POST" 
+                                                          class="inline-block" 
+                                                          onsubmit="return confirmReset()">
+                                                        @csrf
+                                                        <button type="submit" 
+                                                                class="text-yellow-600 hover:text-yellow-900 transition-colors duration-200"
+                                                                title="Reset Password">
+                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                            </svg>
+                                                        </button>
+                                                    </form>
+
+                                                    <a href="{{ route('users.edit-form', $user->user_id) }}" 
+                                                       class="text-blue-600 hover:text-blue-900 transition-colors duration-200"
+                                                       title="Edit User">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                        </svg>
+                                                    </a>
+
+                                                    <form action="{{ route('users.destroy', $user->user_id) }}" 
+                                                          method="POST" 
+                                                          class="inline-block" 
+                                                          onsubmit="return confirm('Are you sure you want to delete this user?')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" 
+                                                                class="text-red-600 hover:text-red-900 transition-colors duration-200"
+                                                                title="Delete User">
+                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                            </svg>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            @else
+                                                <span class="text-gray-400">No actions available</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-10 text-center">
+                                            <div class="flex flex-col items-center">
+                                                <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                                </svg>
+                                                <p class="text-gray-500 text-sm">No users found</p>
+                                                <p class="text-gray-400 text-xs mt-1">Try adjusting your search filters</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <!-- Pagination -->
-                <div class="mt-4">
+                <div class="mt-5">
                     {{ $users->appends(request()->query())->links() }}
                 </div>
             </div>
         </div>
     </div>
-   <!-- JavaScript for Confirmation -->
-<script>
-    function confirmReset() {
-        return confirm("Are you sure you want to reset this user's password?");
-    }
-</script>
 
+    <script>
+        function confirmReset() {
+            return confirm("Are you sure you want to reset this user's password?");
+        }
+    </script>
 </x-app-layout>
