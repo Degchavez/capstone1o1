@@ -127,20 +127,23 @@
                         </div>
 
                         <div>
-                            <x-input-label for="category" :value="__('Category')" class="text-lg font-semibold text-gray-800"/>
-                            <select name="category" id="category" class="mt-1 block w-full rounded-lg border-green-600 shadow-sm focus:ring-2 focus:ring-green-500">
-                                <option value="">Select Category</option>
-                                <option value="N/A" {{ old('category', $user->owner->category ?? '') == 'N/A' ? 'selected' : '' }}>N/A</option>
-                                <option value="Indigenous People" {{ old('category', $user->owner->category ?? '') == 'Indigenous People' ? 'selected' : '' }}>Indigenous People</option>
-                                <option value="Senior" {{ old('category', $user->owner->category ?? '') == 'Senior' ? 'selected' : '' }}>Senior</option>
-                                <option value="Single Parent" {{ old('category', $user->owner->category ?? '') == 'Single Parent' ? 'selected' : '' }}>Single Parent</option>
-                                <option value="Pregnant" {{ old('category', $user->owner->category ?? '') == 'Pregnant' ? 'selected' : '' }}>Pregnant</option>
-                                <option value="Person with Disability" {{ old('category', $user->owner->category ?? '') == 'Person with Disability' ? 'selected' : '' }}>Person with Disability</option>
-                                <option value="Lactating Mother" {{ old('category', $user->owner->category ?? '') == 'Lactating Mother' ? 'selected' : '' }}>Lactating Mother</option>
-                                <option value="LGBT" {{ old('category', $user->owner->category ?? '') == 'LGBT' ? 'selected' : '' }}>LGBT</option>
-                            </select>
-                            <x-input-error :messages="$errors->get('category')" class="mt-2" />
-                        </div>
+                            <x-input-label for="categories" :value="__('Categories')" class="text-lg font-semibold text-gray-800"/>
+                            <div class="space-y-2">
+                                @foreach($categories as $category)
+                                    <div class="flex items-center">
+                                        <input 
+                                            type="checkbox" 
+                                            id="category_{{ $category->id }}" 
+                                            name="selectedCategories[]" 
+                                            value="{{ $category->id }}" 
+                                            class="mr-2"
+                                            {{ in_array($category->id, $user->categories->pluck('id')->toArray()) ? 'checked' : '' }}
+                                        />
+                                        <label for="category_{{ $category->id }}" class="text-gray-800">{{ $category->name }}</label>
+                                    </div>
+                                @endforeach
+                            </div>
+                            <x-input-error :messages="$errors->get('selectedCategories')" class="mt-2 text-sm text-red-500" />
                     </div>
                 </div>
 

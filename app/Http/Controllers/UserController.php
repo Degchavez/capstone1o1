@@ -20,6 +20,8 @@ use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
 
 
 
@@ -259,8 +261,9 @@ class UserController extends Controller
 
     public function showRegistrationForm()
     {
-        $barangays = Barangay::all(); // Get all barangays for selection
-        return view('admin.add-owners', compact('barangays'));
+        $barangays = Barangay::all();
+        $categories = Category::all();
+        return view('admin.add-owners', compact('barangays', 'categories'));
     }
 
     /**
@@ -268,7 +271,7 @@ class UserController extends Controller
      */
     public function register(Request $request)
     {
-        // Validate incoming request
+        // Update validation rules
         $request->validate([
             'complete_name' => 'required|string|max:255',
             'contact_no' => 'required|string|max:15',
@@ -278,13 +281,13 @@ class UserController extends Controller
             'barangay_id' => 'required|integer|exists:barangays,id',
             'street' => 'required|string|max:255',
             'civil_status' => 'required|string|max:20',
-            'category' => 'nullable|string|max:100',
+            'category_id' => 'required|exists:categories,id',
             'permit' => 'nullable|string|max:255',
         ]);
-    
+
         // Generate a random password
         $randomPassword = Str::random(8);
-    
+
         // Create the user
         $user = new User();
         $user->complete_name = $request->complete_name;
@@ -293,30 +296,30 @@ class UserController extends Controller
         $user->birth_date = $request->birth_date;
         $user->status = 1;
         $user->email = $request->email;
-        $user->role = 1;  // Assuming '1' is for owner
-        $user->password = bcrypt($randomPassword);  // Use the random password
+        $user->role = 1;
+        $user->password = bcrypt($randomPassword);
         $user->save();
-    
-        // Register the address linked to the user
+
+        // Register the address
         $address = new Address();
         $address->user_id = $user->user_id;
         $address->barangay_id = $request->barangay_id;
         $address->street = $request->street;
         $address->save();
-    
-        // Create the owner record linked to the user
+
+        // Create the owner record with category_id
         $owner = new Owner();
         $owner->user_id = $user->user_id;
         $owner->civil_status = $request->civil_status;
-        $owner->category = $request->category;
-        $owner->permit = 1; 
+        $owner->category_id = $request->category_id;
+        $owner->permit = 1;
         $owner->save();
-    
-        // Send the password to the user's email
+
+        // Send welcome email
         Mail::to($request->email)->send(new WelcomeEmail($user, $randomPassword));
-    
-        // Redirect with a success message
-        return redirect()->route('admin-owners')->with('message', 'User and owner registered successfully, and password has been emailed!');
+
+        return redirect()->route('admin-owners')
+            ->with('message', 'User and owner registered successfully, and password has been emailed!');
     }
     
 
@@ -331,81 +334,89 @@ class UserController extends Controller
     
         // Fetch all barangays for the dropdown list
         $barangays = Barangay::all();
+
+        $categories = Category::all();
     
         // Pass the data to the view
-        return view('admin.ownerlist-edit', compact('user', 'barangays', 'owner'));
+        return view('admin.ownerlist-edit', compact('user', 'barangays', 'owner','categories'));
     }
     
     
 
     public function ownerList_update(Request $request, $owner_id)
     {
-        // Validation
-        $request->validate([
-            'complete_name' => 'required|string|max:100',
-            'contact_no' => 'required|string|max:15',
-            'gender' => 'required|string|max:10',
-            'birth_date' => ['nullable', 'date', 'before_or_equal:today'], // Ensure birthdate is not in the future
-            'status' => 'required|integer',
-            'email' => 'required|email|max:100|unique:users,email,' . $owner_id . ',user_id',
-            'barangay_id' => 'required|exists:barangays,id',
-            'street' => 'nullable|string|max:255',
-            'profile_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048', // Validate image upload
-            'civil_status' => 'nullable|string|max:50', // Additional fields
-            'category' => 'nullable|string|max:50',
-        ]);
-    
-        // Find the user by user_id
-        $user = User::findOrFail($owner_id);
-    
-        // Find the owner record associated with the user
-        $owner = Owner::where('user_id', $user->user_id)->firstOrFail();
-    
-        // Handle profile image upload
-        if ($request->hasFile('profile_image')) {
-            // Delete old image if it exists
-            if ($user->profile_image) {
-                Storage::disk('public')->delete($user->profile_image);
+        try {
+            // Validation
+            $validated = $request->validate([
+                'complete_name' => 'required|string|max:100',
+                'contact_no' => 'required|string|max:15',
+                'gender' => 'required|string|max:10',
+                'birth_date' => ['nullable', 'date'],
+                'status' => 'required|integer',
+                'email' => 'required|email|max:100|unique:users,email,' . $owner_id . ',user_id',
+                'barangay_id' => 'required|exists:barangays,id',
+                'street' => 'nullable|string|max:255',
+                'profile_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+                'civil_status' => 'nullable|string|max:50',
+                'selectedCategories' => 'nullable|array',
+                'selectedCategories.*' => 'nullable|integer'
+            ]);
+
+            DB::beginTransaction();
+
+            // Find the user
+            $user = User::findOrFail($owner_id);
+
+            // Update user
+            $user->update([
+                'complete_name' => $validated['complete_name'],
+                'contact_no' => $validated['contact_no'],
+                'gender' => $validated['gender'],
+                'birth_date' => $validated['birth_date'],
+                'status' => $validated['status'],
+                'email' => $validated['email'],
+                'role' => 1,
+            ]);
+
+            // Update address
+            $user->address()->updateOrCreate(
+                ['user_id' => $user->user_id],
+                [
+                    'barangay_id' => $validated['barangay_id'],
+                    'street' => $validated['street'],
+                ]
+            );
+
+            // Update owner
+            $owner = $user->owner()->updateOrCreate(
+                ['user_id' => $user->user_id],
+                [
+                    'civil_status' => $validated['civil_status'],
+                    'permit' => 1,
+                ]
+            );
+
+            // Update categories
+            if (isset($validated['selectedCategories'])) {
+                // Filter out "0" values and empty strings
+                $categories = array_filter($validated['selectedCategories'], function($value) {
+                    return !empty($value) && $value !== "0";
+                });
+                $user->categories()->sync($request->selectedCategories);
+
             }
-    
-            // Store the new image and update the path
-            $user->profile_image = $request->file('profile_image')->store('profile_images', 'public');
+
+            DB::commit();
+            
+            return redirect()->route('admin-owners')->with('success', 'Profile updated successfully.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['error' => 'An error occurred while updating the profile: ' . $e->getMessage()]);
         }
-    
-        // Update the user record
-        $user->update([
-            'complete_name' => $request->complete_name,
-            'contact_no' => $request->contact_no,
-            'gender' => $request->gender,
-            'birth_date' => $request->birth_date,
-            'status' => $request->status,
-            'email' => $request->email,
-            'role' => 1, // Explicitly set the role
-        ]);
-    
-        // Update or create the user's address
-        $user->address()->updateOrCreate(
-            ['user_id' => $user->user_id], // Match by user_id
-            [
-                'barangay_id' => $request->barangay_id,
-                'street' => $request->street,
-            ]
-        );
-    
-        // Update or create the owner data
-        $user->owner()->updateOrCreate(
-            ['user_id' => $user->user_id], // Match by user_id
-            [
-                'civil_status' => $request->civil_status,
-                'category' => $request->category,
-                'permit' => 1, // Set permit to 1 explicitly
-            ]
-        );
-    
-        // Redirect back with success message
-        return redirect()->route('admin-owners')->with('message', 'Profile updated successfully.');
     }
-    
     public function create_vet()
     {
         $designations = Designation::all(); // Get all designations

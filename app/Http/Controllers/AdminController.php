@@ -20,6 +20,7 @@ use App\Models\Barangay;
 use App\Models\City;
 use App\Models\User;
 use DB; 
+use App\Models\Category; // Add this import
 
 use Illuminate\Http\Request;
 
@@ -702,9 +703,10 @@ public function getBreeds($species_id)
    
    public function owner_edit($id)
    {
-       $user = User::with('address')->findOrFail($id); // Fetch the user with their address
-       $barangays = Barangay::all(); // Fetch all barangays
-       return view('admin.owner-edit', compact('user', 'barangays')); // Pass data to the view
+       $user = User::with(['address', 'owner'])->findOrFail($id);
+       $barangays = Barangay::all();
+       $categories = Category::all();
+       return view('admin.owner-edit', compact('user', 'barangays', 'categories'));
    }
 
    public function owner_update(Request $request, $id)
@@ -718,28 +720,23 @@ public function getBreeds($species_id)
            'email' => 'required|email|max:100|unique:users,email,' . $id . ',user_id',
            'barangay_id' => 'required|exists:barangays,id',
            'street' => 'nullable|string|max:255',
-           'profile_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048', // Added validation for image
+           'profile_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+           'category_id' => 'required|exists:categories,id',
        ]);
 
        $user = User::findOrFail($id);
-
        $transaction = Owner::where('user_id', $user->user_id)->first();
 
-       // Handle profile image upload if a file is provided
+       // Handle profile image upload
        if ($request->hasFile('profile_image')) {
-           // Delete old image if it exists
            if ($user->profile_image) {
                Storage::disk('public')->delete($user->profile_image);
            }
-       
-           // Store the new image
            $imagePath = $request->file('profile_image')->store('profile_images', 'public');
            $user->profile_image = $imagePath;
        }
-       
-        // Set the role to 1 explicitly
-    $user->role = 1;
-       // Update user data
+
+       $user->role = 1;
        $user->update($request->only([
            'complete_name',
            'role',
@@ -750,20 +747,24 @@ public function getBreeds($species_id)
            'email',
        ]));
 
-       // Update or create the address
+       // Update address
        $user->address()->updateOrCreate(
-           ['user_id' => $user->user_id], // Condition to find the address
-           $request->only(['barangay_id', 'street']) // Address fields to update
+           ['user_id' => $user->user_id],
+           $request->only(['barangay_id', 'street'])
        );
 
-       // Update or create the owner's data
+       // Update owner with category_id
        $user->owner()->updateOrCreate(
-           ['user_id' => $user->user_id], // Match condition
-           $request->only(['civil_status', 'category']) + ['permit' => 1] // Data to update, with permit added
+           ['user_id' => $user->user_id],
+           [
+               'civil_status' => $request->civil_status,
+               'category_id' => $request->category_id,
+               'permit' => 1
+           ]
        );
-       return redirect()->route('owners.profile-owner', ['owner_id' => $transaction->owner_id])
-       ->with('message', 'Profile updated successfully.');
 
+       return redirect()->route('owners.profile-owner', ['owner_id' => $transaction->owner_id])
+           ->with('message', 'Profile updated successfully.');
    }
 
    public function showAnimalProfile(Request $request, $animal_id)
