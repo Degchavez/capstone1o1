@@ -27,65 +27,66 @@ use Illuminate\Http\Request;
 class AdminController extends Controller
 {
     public function loadAdminDashboard(Request $request)
-{
-    // Retrieve filter and search inputs
-    $search = $request->input('search');
-    $statusFilter = $request->input('status');
-    $veterinarianFilter = $request->input('veterinarian');
-    $technicianFilter = $request->input('technician');
+    {
+        // Retrieve filter and search inputs
+        $search = $request->input('search');
+        $statusFilter = $request->input('status');
+        $veterinarianFilter = $request->input('veterinarian');
+        $technicianFilter = $request->input('technician');
 
-    // Query for transactions with filters
-    $transactionsQuery = Transaction::with(['transactionSubtype', 'owner.user', 'animal', 'vet', 'technician']);
+        // Query for transactions with filters
+        $transactionsQuery = Transaction::with(['transactionSubtype', 'owner.user', 'animal', 'vet', 'technician']);
 
-    if ($search) {
-        $transactionsQuery->whereHas('owner.user', function ($query) use ($search) {
-            $query->where('complete_name', 'like', '%' . $search . '%');
-        })->orWhereHas('animal', function ($query) use ($search) {
-            $query->where('name', 'like', '%' . $search . '%');
-        });
+        if ($search) {
+            $transactionsQuery->whereHas('owner.user', function ($query) use ($search) {
+                $query->where('complete_name', 'like', '%' . $search . '%');
+            })->orWhereHas('animal', function ($query) use ($search) {
+                $query->where('name', 'like', '%' . $search . '%');
+            });
+        }
+
+        // Modified status filter logic
+        if ($statusFilter !== null && $statusFilter !== '') {
+            $transactionsQuery->where('status', (int)$statusFilter);
+        }
+
+        if ($veterinarianFilter) {
+            $transactionsQuery->where('vet_id', $veterinarianFilter);
+        }
+
+        if ($technicianFilter) {
+            $transactionsQuery->where('technician_id', $technicianFilter);
+        }
+
+        $recentTransactions = $transactionsQuery->latest()->paginate(5);
+
+        // Fetch data for filters
+        $veterinarians = User::where('role', 2)->get(); // Veterinarians have role = 2
+        $technicians = VeterinaryTechnician::all(); // Fetch all technicians
+        $statuses = [
+            0 => 'Pending',
+            1 => 'Completed',
+            2 => 'Canceled',
+        ];
+
+        // Dashboard statistics
+        $totalOwners = User::where('role', 1)->count();
+        $successfulTransactions = Transaction::where('status', 1)->count();
+        $totalAnimals = Animal::count();
+        $lastWeekTransactions = Transaction::whereBetween('created_at', [now()->subWeek()->startOfWeek(), now()->subWeek()->endOfWeek()])
+            ->count();
+
+        return view('admin.dashboard', compact(
+            'veterinarians',
+            'technicians',
+            'recentTransactions',
+            'statuses',
+            'totalOwners',
+            'successfulTransactions',
+            'totalAnimals',
+            'lastWeekTransactions'
+        ));
     }
-
-    if ($statusFilter) {
-        $transactionsQuery->where('status', $statusFilter);
-    }
-
-    if ($veterinarianFilter) {
-        $transactionsQuery->where('vet_id', $veterinarianFilter);
-    }
-
-    if ($technicianFilter) {
-        $transactionsQuery->where('technician_id', $technicianFilter);
-    }
-
-    $recentTransactions = $transactionsQuery->latest()->paginate(5);
-
-    // Fetch data for filters
-    $veterinarians = User::where('role', 2)->get(); // Veterinarians have role = 2
-    $technicians = VeterinaryTechnician::all(); // Fetch all technicians
-    $statuses = [
-        0 => 'Pending',
-        1 => 'Completed',
-        2 => 'Canceled',
-    ];
-
-    // Dashboard statistics
-    $totalOwners = User::where('role', 1)->count();
-    $successfulTransactions = Transaction::where('status', 1)->count();
-    $totalAnimals = Animal::count();
-    $lastWeekTransactions = Transaction::whereBetween('created_at', [now()->subWeek()->startOfWeek(), now()->subWeek()->endOfWeek()])
-        ->count();
-
-    return view('admin.dashboard', compact(
-        'veterinarians',
-        'technicians',
-        'recentTransactions',
-        'statuses',
-        'totalOwners',
-        'successfulTransactions',
-        'totalAnimals',
-        'lastWeekTransactions'
-    ));
-}
 
     
 

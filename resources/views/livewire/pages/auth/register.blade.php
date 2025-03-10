@@ -108,7 +108,7 @@ new #[Layout('layouts.guest')] class extends Component
 
 
 ?>
-<div class="min-h-screen bg-cover bg-center" style="background-image: url('{{ asset('assets/bg3.jpg') }}');">
+<div class="min-h-screen bg-cover bg-center" style="background-image: url('{{ asset('assets/.jpg') }}');">
     <!-- Logo -->
     <div class="text-center mb-8">
         <a href="/">

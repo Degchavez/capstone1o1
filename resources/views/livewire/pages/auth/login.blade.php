@@ -32,7 +32,7 @@ new #[Layout('layouts.guest')] class extends Component
 
     }
 }; ?>
-<div class="min-h-screen bg-cover bg-center" style="background-image: url('{{ asset('assets/bg3.jpg') }}');">
+<div class="min-h-screen bg-cover bg-center" style="background-image: url('{{ asset('assets/.jpg') }}');">
     <!-- This outer div now has the background image, covering the whole screen -->
     <div class="flex justify-center items-center h-full">
         <div class="w-full max-w-md space-y-8">

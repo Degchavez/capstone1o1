@@ -1,136 +1,155 @@
 <x-app-layout>
-    <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-2xl">
-
-        <!-- Title Section -->
-        <div class="text-center mb-8">
-            <h2 class="text-4xl font-bold text-black">User Profile</h2>
-            <p class="text-lg text-gray-600">View and manage your profile details.</p>
-        </div>
-
-        <!-- Profile Banner -->
-        <div class="w-full h-40 bg-gradient-to-b from-transparent to-gray-800 mb-6 rounded-lg shadow-md overflow-hidden">
-            <img class="w-full h-full object-cover" 
-                 src="{{ $user->profile_banner ? Storage::url($user->profile_banner) : asset('assets/profile_banner.jpg') }}" 
-                 alt="Profile Banner">
-        </div>
-<!-- Profile Info Section -->
-<div class="flex flex-col items-center mb-12">
-    <!-- Profile Image -->
-    <div class="flex-shrink-0 flex justify-center mb-6">
-        <img class="w-60 h-60 object-cover rounded-full border-4 border-dark-green shadow-xl hover:scale-105 transition-all duration-300 ease-in-out" 
-             src="{{ $user->profile_image ? Storage::url($user->profile_image) : asset('assets/default-avatar.png') }}" 
-             alt="Profile Image">
-    </div>
-
-    <!-- User Info -->
-    <div class="space-y-4 text-center">
-        <h3 class="text-2xl font-semibold text-dark-green">{{ $user->complete_name }}</h3>
-        <p class="text-lg text-gray-700">
-            <span class="font-semibold">Role:</span> 
-            @switch($user->role)
-                @case(0) Admin @break
-                @case(1) Animal Owner @break
-                @case(2) Veterinarian @break
-                @case(3) Veterinary Receptionist @break
-                @default Unknown
-            @endswitch
-        </p>
-        <p class="text-lg text-gray-700"><span class="font-semibold">Gender:</span> {{ $user->gender }}</p>
-        <p class="text-lg text-gray-700"><span class="font-semibold">Email:</span> {{ $user->email }}</p>
-        <p class="text-lg text-gray-700"><span class="font-semibold">Status:</span> 
-            @switch($user->status)
-                @case(0) Pending @break
-                @case(1) Active @break
-                @case(2) Disabled @break
-                @default Unknown
-            @endswitch
-        </p>
-    </div>
-</div>
-
-
-        <!-- Profile Info Cards Section -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <!-- Contact No Card -->
-            <div class="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out">
-                <h3 class="font-semibold text-dark-green"><i class="fas fa-phone-alt mr-2"></i> Contact No.</h3>
-                <p class="text-gray-700">{{ $user->contact_no }}</p>
-            </div>
-
-            <!-- Birth Date Card -->
-            <div class="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out">
-                <h3 class="font-semibold text-dark-green"><i class="fas fa-birthday-cake mr-2"></i> Birth Date</h3>
-                <p class="text-gray-700">{{ $user->birth_date }}</p>
-            </div>
-
-            <!-- Address Card -->
-            <div class="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out">
-                <h3 class="font-semibold text-dark-green"><i class="fas fa-map-marker-alt mr-2"></i> Address</h3>
-                <p class="text-gray-700">{{ $user->address->street ?? 'No street information' }},
-                    {{ $user->address->barangay->barangay_name ?? 'No barangay information' }}
-                </p>
-            </div>
-
-            <!-- Status Card -->
-            <div class="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out">
-                <h3 class="font-semibold text-dark-green"><i class="fas fa-flag-checkered mr-2"></i> Account Status</h3>
-                <p class="text-gray-700">
-                    @switch($user->status)
-                        @case(1) <span class="text-green-500">Active</span> @break
-                        @case(2) <span class="text-red-500">Disabled</span> @break
-                        @default Unknown
-                    @endswitch
-                </p>
-            </div>
-        </div>
-        
-
-        <!-- Animal Owner Specific Info -->
-        @if ($user->role == 1)
-            <div class="mt-6 space-y-4">
-                <div class="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out">
-                    <h3 class="font-semibold text-dark-green"><i class="fas fa-heart mr-2"></i> Civil Status</h3>
-                    <p class="text-gray-700">{{ $user->owner->civil_status ?? 'N/A' }}</p>
-                </div>
-
-                <div class="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out">
-                    <h3 class="font-semibold text-dark-green"><i class="fas fa-tags mr-2"></i> Category</h3>
-                    <p class="text-gray-700">{{ $user->owner->category ?? 'N/A' }}</p>
+    <div class="max-w-6xl mx-auto px-4 py-8">
+        <!-- Main Profile Card -->
+        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <!-- Profile Banner with Overlay -->
+            <div class="relative h-56">
+                <img class="w-full h-full object-cover" 
+                     src="{{ $user->profile_banner ? Storage::url($user->profile_banner) : asset('assets/profile_banner.jpg') }}" 
+                     alt="Profile Banner">
+                <div class="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/40"></div>
+                
+                <!-- Profile Image & Name Overlay -->
+                <div class="absolute -bottom-16 left-8 flex items-end space-x-6">
+                    <div class="relative">
+                        <img class="w-32 h-32 rounded-xl border-4 border-white shadow-xl object-cover" 
+                             src="{{ $user->profile_image ? Storage::url($user->profile_image) : asset('assets/default-avatar.png') }}" 
+                             alt="Profile Image">
+                        <div class="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center {{ $user->status == 1 ? 'bg-green-500' : 'bg-red-500' }} border-2 border-white">
+                            <i class="fas fa-{{ $user->status == 1 ? 'check' : 'times' }} text-white text-xs"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
-        @endif
 
-        <!-- Action Buttons -->
-        <div class="mt-8 flex justify-center space-x-4">
-            <!-- Back Button -->
-            <a href="/admin/users" class="inline-block px-6 py-3 bg-dark-green text-white font-semibold rounded-lg shadow-md hover:bg-black transition duration-300 ease-in-out">
-                Back to Users List
-            </a>
+            <!-- Main Content -->
+            <div class="pt-20 px-8 pb-8">
+                <!-- User Basic Info -->
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">{{ $user->complete_name }}</h1>
+                        <div class="mt-2 flex items-center space-x-4">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+                                {{ $user->role == 0 ? 'bg-purple-100 text-purple-800' :
+                                   ($user->role == 1 ? 'bg-blue-100 text-blue-800' :
+                                   ($user->role == 2 ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800')) }}">
+                                <i class="fas fa-{{ $user->role == 0 ? 'shield-alt' : 
+                                                   ($user->role == 1 ? 'user' : 
+                                                   ($user->role == 2 ? 'user-md' : 'user-nurse')) }} mr-2"></i>
+                                @switch($user->role)
+                                    @case(0) Admin @break
+                                    @case(1) Animal Owner @break
+                                    @case(2) Veterinarian @break
+                                    @case(3) Veterinary Receptionist @break
+                                    @default Unknown
+                                @endswitch
+                            </span>
+                            <span class="text-gray-500">•</span>
+                            <span class="text-gray-600">{{ $user->email }}</span>
+                        </div>
+                    </div>
+                </div>
 
-            <!-- Edit Button -->
-            <a href="{{ route('users.edit-form', ['id' => $user->user_id]) }}" class="inline-block px-6 py-3 bg-dark-green text-white font-semibold rounded-lg shadow-md hover:bg-black transition duration-300 ease-in-out">
-                Edit Profile
-            </a>
+                <!-- Info Grid -->
+                <div class="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Personal Information -->
+                    <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="p-2 bg-blue-100 rounded-lg">
+                                <i class="fas fa-user text-blue-600"></i>
+                            </div>
+                            <h3 class="font-semibold text-gray-900">Personal Information</h3>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex items-center text-gray-600">
+                                <i class="fas fa-venus-mars w-6 text-gray-400"></i>
+                                <span class="ml-2">{{ $user->gender }}</span>
+                            </div>
+                            <div class="flex items-center text-gray-600">
+                                <i class="fas fa-birthday-cake w-6 text-gray-400"></i>
+                                <span class="ml-2">{{ $user->birth_date }}</span>
+                            </div>
+                            <div class="flex items-center text-gray-600">
+                                <i class="fas fa-phone w-6 text-gray-400"></i>
+                                <span class="ml-2">{{ $user->contact_no }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Address Information -->
+                    <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="p-2 bg-green-100 rounded-lg">
+                                <i class="fas fa-map-marker-alt text-green-600"></i>
+                            </div>
+                            <h3 class="font-semibold text-gray-900">Address Details</h3>
+                        </div>
+                        <p class="text-gray-600 leading-relaxed">
+                            {{ $user->address->street ?? 'No street information' }},
+                            {{ $user->address->barangay->barangay_name ?? 'No barangay information' }}
+                        </p>
+                    </div>
+
+                    <!-- Account Status -->
+                    <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="p-2 bg-yellow-100 rounded-lg">
+                                <i class="fas fa-shield-alt text-yellow-600"></i>
+                            </div>
+                            <h3 class="font-semibold text-gray-900">Account Status</h3>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="px-3 py-1 rounded-full text-sm font-medium
+                                {{ $user->status == 1 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                @switch($user->status)
+                                    @case(1) Active @break
+                                    @case(2) Disabled @break
+                                    @default Unknown
+                                @endswitch
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Animal Owner Specific Info -->
+                @if ($user->role == 1)
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <div class="p-2 bg-pink-100 rounded-lg">
+                                    <i class="fas fa-heart text-pink-600"></i>
+                                </div>
+                                <h3 class="font-semibold text-gray-900">Civil Status</h3>
+                            </div>
+                            <p class="text-gray-600">{{ $user->owner->civil_status ?? 'N/A' }}</p>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <div class="p-2 bg-indigo-100 rounded-lg">
+                                    <i class="fas fa-tags text-indigo-600"></i>
+                                </div>
+                                <h3 class="font-semibold text-gray-900">Category</h3>
+                            </div>
+                            <p class="text-gray-600">{{ $user->owner->category ?? 'N/A' }}</p>
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Action Buttons -->
+                <div class="mt-8 flex justify-end space-x-4">
+                    <a href="/admin/users" 
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Back to Users List
+                    </a>
+                    <a href="{{ route('users.edit-form', ['id' => $user->user_id]) }}" 
+                       class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
+                        <i class="fas fa-edit mr-2"></i>
+                        Edit Profile
+                    </a>
+                </div>
+            </div>
         </div>
-
     </div>
-
-    <style>
-        .text-dark-green {
-            color: #000000;
-        }
-
-        .bg-dark-green {
-            background-color: #000000;
-        }
-
-        .bg-dark-green:hover {
-            background-color: #2c6d37;
-        }
-
-        .hover\:shadow-xl:hover {
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
-        }
-    </style>
-
 </x-app-layout>
