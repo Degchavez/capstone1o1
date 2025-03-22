@@ -38,7 +38,7 @@ class DesignationController extends Controller
     public function update(Request $request, Designation $designation)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:designations,name,' . $designation->designation_id,
+            'name' => 'required|string|max:255|unique:designations,name,' . $designation->designation_id . ',designation_id',
             'description' => 'nullable|string',
         ]);
 

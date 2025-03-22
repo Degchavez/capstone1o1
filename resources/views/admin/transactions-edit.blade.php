@@ -24,8 +24,8 @@
 
                     <!-- Transaction Subtype -->
                     <div>
-                        <label for="transaction_subtype_id" class="block text-sm font-medium text-gray-600 dark:text-neutral-400">Transaction Type</label>
-                        <select id="transaction_subtype_id" name="transaction_subtype_id" class="form-control">
+                        <label for="transaction_subtype_id" class="block text-sm font-medium text-gray-600 dark:text-neutral-400">Transaction Subtype</label>
+                        <select id="transaction_subtype_id" name="transaction_subtype_id" class="w-full border border-gray-300 rounded-lg dark:bg-neutral-800 dark:border-neutral-600 dark:text-neutral-200">
                             <option value="" disabled>Select a subtype</option>
                             <!-- Subtypes will be populated by JavaScript -->
                         </select>
@@ -70,27 +70,27 @@
                     </div>
 
                     <!-- Status -->
-                    <div class="mb-4">
-                        <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                        <select name="status" id="status" class="w-full p-2 border border-gray-300 rounded-md">
+                    <div>
+                        <label for="status" class="block text-sm font-medium text-gray-600 dark:text-neutral-400">Status</label>
+                        <select name="status" id="status" class="w-full border border-gray-300 rounded-lg dark:bg-neutral-800 dark:border-neutral-600 dark:text-neutral-200">
                             <option value="0" {{ old('status', $transaction->status) == 0 ? 'selected' : '' }}>Pending</option>
                             <option value="1" {{ old('status', $transaction->status) == 1 ? 'selected' : '' }}>Completed</option>
                             <option value="2" {{ old('status', $transaction->status) == 2 ? 'selected' : '' }}>Cancelled</option>
                         </select>
                         @error('status')
-                            <div class="text-danger">{{ $message }}</div>
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                         @enderror
                     </div>
                     
                 </div>
 
-                <div class="mt-4">
+                <div class="mt-6">
                     <label for="details" class="block text-sm font-medium text-gray-600 dark:text-neutral-400">Notes</label>
-                    <textarea id="details" name="details" rows="4" class="w-full border border-gray-300 rounded-lg dark:bg-neutral-800 dark:border-neutral-600 dark:text-neutral-200">{{ old('details', $transaction->details) }}</textarea>
+                    <textarea id="details" name="details" rows="4" class="mt-1 w-full border border-gray-300 rounded-lg dark:bg-neutral-800 dark:border-neutral-600 dark:text-neutral-200">{{ old('details', $transaction->details) }}</textarea>
                 </div>
 
-                <div class="mt-4">
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Update Transaction</button>
+                <div class="mt-6">
+                    <button type="submit" class="w-full md:w-auto px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200">Update Transaction</button>
                 </div>
             </form>
         </div>

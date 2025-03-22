@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="min-h-screen bg-gray-50">
+    <div class="min-h-screen">
         <div class="max-w-[95%] mx-auto py-8">
             <!-- Alert Messages -->
             @if (session()->has('message'))
