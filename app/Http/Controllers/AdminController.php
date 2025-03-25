@@ -445,7 +445,7 @@ class AdminController extends Controller
        
        $search = $request->input('search', '');
        $gender = $request->input('gender', '');
-       $selectedCategory = $request->input('category', '');
+       $selectedCategory = $request->input('category');
        $civil_status = $request->input('civil_status', '');
        $barangay_id = $request->input('barangay', '');
 
@@ -469,7 +469,7 @@ class AdminController extends Controller
                      ->orWhere('addresses.street', 'like', '%' . $search . '%')
                      ->orWhere('barangays.barangay_name', 'like', '%' . $search . '%');
            })
-           ->when($selectedCategory, function ($query) use ($selectedCategory) {
+           ->when($selectedCategory !== '' && $selectedCategory !== null, function ($query) use ($selectedCategory) {
                return $query->whereHas('user.categories', function ($q) use ($selectedCategory) {
                    $q->where('categories.id', $selectedCategory);
                });

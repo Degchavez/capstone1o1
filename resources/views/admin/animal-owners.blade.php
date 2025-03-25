@@ -92,7 +92,7 @@
                                 id="categoryFilter">
                             <option value="">All Categories</option>
                             @foreach($categories as $category)
-                                <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
+                                <option value="{{ $category->id }}" {{ request('category') == (string)$category->id ? 'selected' : '' }}>
                                     {{ $category->name }}
                                 </option>
                             @endforeach
