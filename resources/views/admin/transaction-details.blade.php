@@ -93,7 +93,7 @@
                             <div class="flex items-start space-x-4">
                                 <div class="flex-shrink-0">
                                     <img class="h-16 w-16 rounded-lg object-cover" 
-                                         src="{{ $transaction->animal->photo_front ? asset('storage/' . $transaction->animal->photo_front) : asset('assets/default-animal.png') }}" 
+                                         src="{{ $transaction->animal->photo_front ? asset('storage/' . $transaction->animal->photo_front) : asset('assets/default-avatar.png') }}" 
                                          alt="Animal photo">
                                 </div>
                                 <div class="space-y-1">
