@@ -144,7 +144,6 @@
                                 <th class="px-4 py-2 text-left">Transaction Date</th>
                                 <th class="px-4 py-2 text-left">Technician</th>
                                 <th class="px-4 py-2 text-left">Transaction Details</th>
-
                                 <th class="px-4 py-2 text-left">Status</th>
 
                             </tr>
@@ -210,17 +209,41 @@
                                     
                                     <td class="px-4 py-2 text-gray-700">
                                         @if ($transaction->status == 1)
-                                            <!-- If status is 'Completed', show a button instead of dropdown -->
-                                            <td class="px-4 py-2 text-center">
-                                                <a href="#" 
-                                                   onclick="openTransactionModal('{{ $transaction->transaction_id }}')"
-                                                   class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md transition-all duration-200 ease-in-out hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 flex flex-col">
-                                                    <span class="text-white font-mono font-semibold">✔ Successful</span>
-                                                    <span class="text-sm">See Transaction Details</span>
-                                                </a>
-                                            </td>
-                                            >
+                                            {{-- Display details as read-only when status is "Completed" --}}
+                                            <div class="w-full px-4 py-2 text-gray-700 bg-gray-100 border border-gray-300 rounded-md shadow-sm text-sm">
+                                                <p class="text-gray-700">{{ $transaction->details ?? 'No details available.' }}</p>
+                                            </div>
+                                        @else
+                                            {{-- Editable form when transaction is not completed --}}
+                                            <form action="{{ route('update.dets', $transaction->transaction_id) }}" method="POST" class="flex flex-col space-y-2">
+                                                @csrf
+                                                @method('PUT')
                                             
+                                                <textarea 
+                                                    name="details" 
+                                                    rows="3" 
+                                                    class="w-full px-4 py-2 text-gray-700 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm transition-all duration-200 ease-in-out" 
+                                                    placeholder="Enter transaction details..."
+                                                >{{ old('details', $transaction->details) }}</textarea>
+                                            
+                                                <button type="submit" class="inline-block px-6 py-2 text-white bg-blue-500 hover:bg-blue-600 rounded-lg shadow-md text-sm">
+                                                    Update Details
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </td>
+                                    
+                                    
+
+                                    <td class="px-4 py-2 text-gray-700">
+                                        @if ($transaction->status == 1)
+                                            <!-- If status is 'Completed', show a button instead of dropdown -->
+                                            <a href="#" 
+                                               onclick="openTransactionModal('{{ $transaction->transaction_id }}')"
+                                               class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md transition-all duration-200 ease-in-out hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 flex flex-col">
+                                                <span class="text-white font-mono font-semibold">✔ Successful</span>
+                                                <span class="text-sm">See Transaction Details</span>
+                                            </a>
                                         @else
                                             <!-- If not 'Completed', show dropdown -->
                                             <form action="{{ route('updateStatus', $transaction->transaction_id) }}" method="POST" class="flex items-center" id="statusForm-{{ $transaction->transaction_id }}">
