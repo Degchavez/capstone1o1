@@ -55,6 +55,10 @@ Route::view('profile', 'profile')
 
 Route::group(['middleware' => 'admin'],function(){
 
+    Route::get('/transactions/{transaction_id}', [TransactionsController::class, 'viewTransactionDetails'])
+    ->name('transactions.view');
+
+
     //Dashboard
     Route::get('/admin/dashboard',[AdminController::class,'loadAdminDashboard'])
     ->name('admin-dashboard');

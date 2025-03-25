@@ -161,4 +161,20 @@ public function updateStatus(Request $request, $transaction_id)
     // Redirect back with a success message
     return back()->with('status', 'Transaction status updated successfully!');
 }
+
+public function viewTransactionDetails($transactionId)
+{
+    // Retrieve transaction by 'transaction_id', not 'id'
+    $transaction = Transaction::with([
+        'transactionSubtype', 
+        'owner.user', 
+        'animal', 
+        'vet', 
+        'technician'
+    ])->where('transaction_id', $transactionId)->firstOrFail();
+
+    // Return view with transaction data
+    return view('admin.transaction-details', compact('transaction'));
+}
+
 }

@@ -194,7 +194,9 @@
                                             <select 
                                                 name="technician_id" 
                                                 class="px-8 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-gray-700 font-medium transition-all duration-200 ease-in-out" 
-                                                onchange="confirmTechnicianChange(event, {{ $transaction->transaction_id }})">
+                                                onchange="confirmTechnicianChange(event, {{ $transaction->transaction_id }})"
+                                                {{ $transaction->status == 1 ? 'disabled' : '' }}>  {{-- Disable if status is 1 --}}
+                                                
                                                 <option value="" {{ $transaction->technician_id ? '' : 'selected' }}>Select Technician</option>
                                                 @foreach ($technicians as $technician)
                                                     <option value="{{ $technician->technician_id }}" 
@@ -205,34 +207,47 @@
                                             </select>
                                         </form>
                                     </td>
+                                    
                                     <td class="px-4 py-2 text-gray-700">
-                                        <form action="{{ route('update.dets', $transaction->transaction_id) }}" method="POST" class="flex flex-col space-y-2">
-                                            @csrf
-                                            @method('PUT')
-                                    
-                                            <textarea 
-                                                name="details" 
-                                                rows="3" 
-                                                class="w-full px-4 py-2 text-gray-700 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm transition-all duration-200 ease-in-out" 
-                                                placeholder="Enter transaction details..."
-                                            >{{ $transaction->details }}</textarea>
-                                    
-                                            <button type="submit" class="inline-block px-6 py-2 text-white bg-blue-500 hover:bg-blue-600 rounded-lg shadow-md text-sm">
-                                                Update Details
-                                            </button>
-                                        </form>
+                                        @if ($transaction->status == 1)
+                                            {{-- Display details as read-only when status is "Completed" --}}
+                                            <div class="w-full px-4 py-2 text-gray-700 bg-gray-100 border border-gray-300 rounded-md shadow-sm text-sm">
+                                                <p class="text-gray-700">{{ $transaction->details ?? 'No details available.' }}</p>
+                                            </div>
+                                        @else
+                                            {{-- Editable form when transaction is not completed --}}
+                                            <form action="{{ route('update.dets', $transaction->transaction_id) }}" method="POST" class="flex flex-col space-y-2">
+                                                @csrf
+                                                @method('PUT')
+                                            
+                                                <textarea 
+                                                    name="details" 
+                                                    rows="3" 
+                                                    class="w-full px-4 py-2 text-gray-700 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm transition-all duration-200 ease-in-out" 
+                                                    placeholder="Enter transaction details..."
+                                                >{{ old('details', $transaction->details) }}</textarea>
+                                            
+                                                <button type="submit" class="inline-block px-6 py-2 text-white bg-blue-500 hover:bg-blue-600 rounded-lg shadow-md text-sm">
+                                                    Update Details
+                                                </button>
+                                            </form>
+                                        @endif
                                     </td>
+                                    
                                     
 
                                     <td class="px-4 py-2 text-gray-700 " >
                                         @if ($transaction->status == 1)
                                             <!-- If status is 'Completed', show a button instead of dropdown -->
-                                            <button 
-                                                class="px-6 py-2 bg-green-500 text-white font-medium rounded-md shadow-sm transition-all duration-200 ease-in-out hover:bg-green-600 flex flex-col"
-                                                onclick="viewTransactionDetails({{ $transaction->transaction_id }})">                                      
-                                                <span class="text-blue font-mono font-semibold">Successful </span>
-                                                <span>See Transaction Details</span>
-                                            </button>
+                                            <td class="px-4 py-2 text-center">
+                                                <a href="{{ route('transactions.view', $transaction->transaction_id) }}" 
+                                                   class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md transition-all duration-200 ease-in-out hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 flex flex-col">
+                                                    <span class="text-white font-mono font-semibold">✔ Successful</span>
+                                                    <span class="text-sm">See Transaction Details</span>
+                                                </a>
+                                            </td>
+                                            >
+                                            
                                         @else
                                             <!-- If not 'Completed', show dropdown -->
                                             <form action="{{ route('updateStatus', $transaction->transaction_id) }}" method="POST" class="flex items-center" id="statusForm-{{ $transaction->transaction_id }}">
