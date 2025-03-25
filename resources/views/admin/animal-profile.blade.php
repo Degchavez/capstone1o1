@@ -208,18 +208,32 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex items-center space-x-3">
-                                        <a href="{{ route('transactions.edit', $transaction->transaction_id) }}" 
-                                           class="text-blue-600 hover:text-blue-900">Edit</a>
-                                        <form action="{{ route('transactions.destroy', $transaction->transaction_id) }}" 
-                                              method="POST" 
-                                              class="inline-block" 
-                                              onsubmit="return confirmDelete()">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-900">
-                                                Delete
-                                            </button>
-                                        </form>
+                                        @if($transaction->status == 1)
+                                            <!-- For Completed Transactions -->
+                                            <a href="#" 
+                                               onclick="openTransactionModal('{{ $transaction->transaction_id }}')"
+                                               class="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors duration-200">
+                                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                </svg>
+                                                See Details
+                                            </a>
+                                        @else
+                                            <!-- For Pending or Cancelled Transactions -->
+                                            <a href="{{ route('transactions.edit', $transaction->transaction_id) }}" 
+                                               class="text-blue-600 hover:text-blue-900">Edit</a>
+                                            <form action="{{ route('transactions.destroy', $transaction->transaction_id) }}" 
+                                                  method="POST" 
+                                                  class="inline-block" 
+                                                  onsubmit="return confirmDelete()">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:text-red-900">
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -324,6 +338,40 @@
         </div>
     </div>
 
+    <!-- Transaction Modal -->
+    <div id="transactionModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Background overlay -->
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+
+            <!-- Modal panel -->
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+                <!-- Close button -->
+                <div class="absolute top-0 right-0 pt-4 pr-4">
+                    <button type="button" onclick="closeTransactionModal()" class="text-gray-400 hover:text-gray-500">
+                        <span class="sr-only">Close</span>
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Modal content will be loaded here -->
+                <div id="transactionModalContent" class="p-6">
+                    <div class="flex justify-center">
+                        <svg class="animate-spin -ml-1 mr-3 h-10 w-10 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p class="text-lg font-medium text-gray-700">Loading transaction details...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const transactionSubtypes = @json($transactionSubtypes);
 
@@ -366,5 +414,48 @@
                 element.addEventListener('change', () => document.getElementById('filterForm').submit());
             });
         });
-    </script>
+
+        function openTransactionModal(transactionId) {
+            // Show modal
+            document.getElementById('transactionModal').classList.remove('hidden');
+            
+            // Fetch transaction details
+            fetch(`/admin/transactions/${transactionId}/details-partial`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('transactionModalContent').innerHTML = html;
+                })
+                .catch(error => {
+                    document.getElementById('transactionModalContent').innerHTML = `
+                        <div class="text-center text-red-500">
+                            <p>Error loading transaction details. Please try again.</p>
+                        </div>
+                    `;
+                    console.error('Error:', error);
+                });
+        }
+
+        function closeTransactionModal() {
+            // Hide modal
+            document.getElementById('transactionModal').classList.add('hidden');
+            // Reset content to loading state
+            document.getElementById('transactionModalContent').innerHTML = `
+                <div class="flex justify-center">
+                    <svg class="animate-spin -ml-1 mr-3 h-10 w-10 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="text-lg font-medium text-gray-700">Loading transaction details...</p>
+                </div>
+            `;
+        }
+        // Close modal when clicking outside
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('transactionModal');
+            const modalContent = modal.querySelector('.inline-block');
+            if (event.target === modal) {
+                closeTransactionModal();
+            }
+        });
+            </script>
 </x-app-layout>
