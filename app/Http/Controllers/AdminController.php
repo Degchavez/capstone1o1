@@ -439,71 +439,50 @@ class AdminController extends Controller
 
    public function loadOwnersList(Request $request)
    {
-       // Capture filters from the request
-       $search = $request->input('search', '');
-       $gender = $request->input('gender', ''); // Filter by gender
-       $category = $request->input('category', ''); // Filter by category
-       $civil_status = $request->input('civil_status', ''); // Filter by civil status
-       $barangay_id = $request->input('barangay', ''); // Filter by barangay
-   
-       // Fetch barangays for the dropdown
+       // Fetch both categories and barangays
+       $categories = Category::all();
        $barangays = Barangay::select('id', 'barangay_name')->orderBy('barangay_name')->get();
-   
-       // Fetch owners with necessary relationships and filters
+       
+       $search = $request->input('search', '');
+       $gender = $request->input('gender', '');
+       $selectedCategory = $request->input('category', '');
+       $civil_status = $request->input('civil_status', '');
+       $barangay_id = $request->input('barangay', '');
+
        $owners = Owner::with([
                'user',
-               'animals.species', // Load species for animals
-               'animals.breed',   // Load breed for animals
-               'transactions',    // Load transactions
-               'address.barangay' // Load address with barangay
+               'user.categories',
+               'animals.species',
+               'animals.breed',
+               'transactions',
+               'address.barangay'
            ])
            ->join('users', 'owners.user_id', '=', 'users.user_id')
            ->leftJoin('addresses', 'users.user_id', '=', 'addresses.user_id')
            ->leftJoin('barangays', 'addresses.barangay_id', '=', 'barangays.id')
            ->leftJoin('transactions', 'owners.owner_id', '=', 'transactions.owner_id')
            ->leftJoin('transaction_types', 'transactions.transaction_type_id', '=', 'transaction_types.id')
-   
-           // Filter: role must be 'Owner' (role = 1)
            ->where('users.role', 1)
-   
-           // Apply search filter
            ->where(function ($query) use ($search) {
                $query->where('users.complete_name', 'like', '%' . $search . '%')
                      ->orWhere('users.contact_no', 'like', '%' . $search . '%')
                      ->orWhere('addresses.street', 'like', '%' . $search . '%')
                      ->orWhere('barangays.barangay_name', 'like', '%' . $search . '%');
            })
-   
-          // Apply gender filter
-->when($gender, function ($query) use ($gender) {
-    return $query->where('users.gender', $gender);
-})
-
-// Apply category filter
-->when($category, function ($query) use ($category) {
-    return $query->where('owners.category', $category);
-})
-
-// Apply civil status filter
-->when($civil_status, function ($query) use ($civil_status) {
-    return $query->where('owners.civil_status', $civil_status);
-})
-
-// Apply barangay filter
-->when($barangay_id, function ($query) use ($barangay_id) {
-    return $query->where('barangays.id', $barangay_id);
-})
-
-// Apply date range filter
-->when(request('fromDate'), function ($query) {
-    return $query->whereDate('owners.created_at', '>=', request('fromDate'));
-})
-->when(request('toDate'), function ($query) {
-    return $query->whereDate('owners.created_at', '<=', request('toDate'));
-})
-
-   
-           // Select necessary fields
+           ->when($selectedCategory, function ($query) use ($selectedCategory) {
+               return $query->whereHas('user.categories', function ($q) use ($selectedCategory) {
+                   $q->where('categories.id', $selectedCategory);
+               });
+           })
+           ->when($gender, function ($query) use ($gender) {
+               return $query->where('users.gender', $gender);
+           })
+           ->when($civil_status, function ($query) use ($civil_status) {
+               return $query->where('owners.civil_status', $civil_status);
+           })
+           ->when($barangay_id, function ($query) use ($barangay_id) {
+               return $query->where('barangays.id', $barangay_id);
+           })
            ->select(
                'owners.owner_id', 
                'owners.civil_status',
@@ -521,8 +500,6 @@ class AdminController extends Controller
                DB::raw('GROUP_CONCAT(transaction_types.type_name) as transaction_types'),
                DB::raw('MAX(transactions.created_at) as transaction_created_at')
            )
-   
-           // Group by owner attributes
            ->groupBy(
                'owners.owner_id',
                'owners.civil_status',
@@ -537,15 +514,21 @@ class AdminController extends Controller
                'addresses.street',
                'barangays.barangay_name'
            )
-   
-           // Order by creation date
            ->orderBy('users.created_at', 'desc')
-   
-           // Pagination: 25 items per page
            ->paginate(15);
-   
-       // Return to the view with compact variables
-       return view('admin.animal-owners', compact('owners', 'search', 'gender', 'category', 'civil_status', 'barangays', 'barangay_id'));
+
+       // Return view with all necessary variables
+       return view('admin.animal-owners', compact(
+           'owners',
+           'search',
+           'gender',
+           'selectedCategory',
+           'civil_status',
+           'barangays',
+           'barangay_id',
+           'categories'
+       ));
+       
    }
    
    

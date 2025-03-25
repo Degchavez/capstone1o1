@@ -91,14 +91,11 @@
                                 class="w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                 id="categoryFilter">
                             <option value="">All Categories</option>
-                            <option value="N/A" {{ request('category') == 'N/A' ? 'selected' : '' }}>N/A</option>
-                            <option value="indigenous people" {{ request('category') == 'indigenous people' ? 'selected' : '' }}>Indigenous People</option>
-                            <option value="senior" {{ request('category') == 'senior' ? 'selected' : '' }}>Senior</option>
-                            <option value="single parent" {{ request('category') == 'single parent' ? 'selected' : '' }}>Single Parent</option>
-                            <option value="pregnant" {{ request('category') == 'pregnant' ? 'selected' : '' }}>Pregnant</option>
-                            <option value="person with disability" {{ request('category') == 'person with disability' ? 'selected' : '' }}>Person With Disability</option>
-                            <option value="lactating mother" {{ request('category') == 'lactating mother' ? 'selected' : '' }}>Lactating Mother</option>
-                            <option value="LGBT" {{ request('category') == 'LGBT' ? 'selected' : '' }}>LGBT</option>
+                            @foreach($categories as $category)
+                                <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
 
@@ -190,9 +187,33 @@
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                            {{ $owner->category !== 'N/A' ? ucfirst($owner->category) : 'None' }}
-                                        </span>
+                                        <div class="flex flex-wrap gap-1">
+                                            @if($owner->user->categories && $owner->user->categories->count() > 0)
+                                                @foreach($owner->user->categories as $category)
+                                                    @php
+                                                        $colorClasses = [
+                                                            1 => 'bg-blue-100 text-blue-800',
+                                                            2 => 'bg-green-100 text-green-800',
+                                                            3 => 'bg-purple-100 text-purple-800',
+                                                            4 => 'bg-yellow-100 text-yellow-800',
+                                                            5 => 'bg-pink-100 text-pink-800',
+                                                            6 => 'bg-indigo-100 text-indigo-800',
+                                                            7 => 'bg-red-100 text-red-800',
+                                                            'default' => 'bg-gray-100 text-gray-800'
+                                                        ];
+                                                        $classes = $colorClasses[$category->id] ?? $colorClasses['default'];
+                                                    @endphp
+                                                    
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $classes }}">
+                                                        {{ $category->name }}
+                                                    </span>
+                                                @endforeach
+                                            @else
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                    No Categories
+                                                </span>
+                                            @endif
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center space-x-4">
