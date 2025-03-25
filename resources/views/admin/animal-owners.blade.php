@@ -265,9 +265,9 @@
                 this.form.submit();
             });
         });
-
-        // Debounce search input
-        let timeout = null;
+    
+        // Debounce search input - FIXED
+        var timeout = null; // Changed from let to var
         document.getElementById('searchInput')?.addEventListener('input', function() {
             clearTimeout(timeout);
             timeout = setTimeout(() => {
