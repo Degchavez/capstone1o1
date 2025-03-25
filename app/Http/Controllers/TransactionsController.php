@@ -15,7 +15,7 @@ use App\Models\City;
 use App\Models\User;
 use App\Models\VeterinaryTechnician;
 use App\Models\Vaccine;
-
+use PDF;
 use DB; 
 
 use Illuminate\Http\Request;
@@ -190,6 +190,18 @@ public function getTransactionDetailsPartial($transactionId)
 
     // Return partial view with transaction data
     return view('admin.transaction-details', compact('transaction'));
+}
+
+
+public function downloadPdf($transaction_id)
+{
+    $transaction = Transaction::where('transaction_id', $transaction_id)->firstOrFail();
+    
+    $pdf = PDF::loadView('admin.transaction-details-pdf', [
+        'transaction' => $transaction
+    ]);
+    
+    return $pdf->download('transaction-'.$transaction_id.'.pdf');
 }
 
 }

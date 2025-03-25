@@ -7,13 +7,16 @@
                     <h1 class="text-3xl font-bold text-gray-900">Transaction Details</h1>
                     <p class="mt-2 text-gray-500">Detailed information about transaction #{{ $transaction->transaction_id }}</p>
                 </div>
-                <a href="{{ route('admin-dashboard') }}" 
-                   class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
-                    </svg>
-                    Back to Dashboard
-                </a>
+                <div class="flex space-x-4">
+                    <a href="{{ route('transaction.download.pdf', $transaction->transaction_id) }}" 
+                       class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17v3a2 2 0 002 2h14a2 2 0 002-2v-3M3 7v3a2 2 0 002 2h14a2 2 0 002-2V7"/>
+                        </svg>
+                        Download PDF
+                    </a>
+
+                </div>
             </div>
 
             <!-- Main Card -->

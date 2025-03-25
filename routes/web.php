@@ -62,7 +62,8 @@ Route::get('/admin/transactions/{transactionId}/details-partial', [TransactionsC
     ->name('transactions.details-partial')
     ->middleware(['auth', 'admin']);
 
-// ... existing code ...
+    Route::get('/transaction/{transaction}/pdf', [TransactionsController::class, 'downloadPdf'])
+    ->name('transaction.download.pdf');
 
 
     //Dashboard
