@@ -15,9 +15,11 @@ use App\Models\Address;
 use App\Models\Barangay;
 use App\Models\City;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log; // ✅ ADD THIS LINE
 use Illuminate\Support\Facades\Storage; // Add this line
 
-use DB; 
+
 
 use Illuminate\Http\Request;
 
@@ -407,6 +409,53 @@ public function animalUpdate(Request $request, $animal_id)
     }
 }
 
+
+public function getTransactionDetail(Request $request, $transaction_id)
+{
+    try {
+        $transaction = DB::table('transactions as t')
+            ->leftJoin('owners as o', 't.owner_id', '=', 'o.owner_id')
+            ->leftJoin('users as u', 'o.user_id', '=', 'u.user_id')
+            ->leftJoin('animals as a', 't.animal_id', '=', 'a.animal_id')
+            ->leftJoin('species as s', 'a.species_id', '=', 's.species_id')
+            ->leftJoin('breeds as b', 'a.breed_id', '=', 'b.breed_id')
+            ->leftJoin('transaction_types as tt', 't.transaction_type_id', '=', 'tt.id')
+            ->leftJoin('transaction_subtypes as ts', 't.transaction_subtype_id', '=', 'ts.id')
+            ->leftJoin('veterinary_technicians as vt', 't.technician_id', '=', 'vt.technician_id')
+            ->where('t.transaction_id', $transaction_id)
+            ->select([
+                't.*',
+                'u.complete_name as owner_name',
+                'u.profile_image as owner_image',
+                'a.name as animal_name',
+                'a.photo_front as animal_image',
+                's.name as species_name',
+                'b.name as breed_name',
+                'tt.type_name as transaction_type',
+                'ts.subtype_name as transaction_subtype',
+                'vt.full_name as technician_name',
+                'o.owner_id'
+            ])
+            ->first();
+
+        if (!$transaction) {
+            return back()->with('error', 'Transaction not found.');
+        }
+
+        // Add this debug line
+        \Log::info('Transaction details:', ['transaction' => $transaction]);
+
+        // Make sure this view exists at resources/views/admin/transaction-details.blade.php
+        return view('admin.transaction-details', compact('transaction'));
+
+    } catch (\Exception $e) {
+        \Log::error('Error fetching transaction:', [
+            'error' => $e->getMessage(),
+            'transaction_id' => $transaction_id
+        ]);
+        return back()->with('error', 'Error loading transaction details.');
+    }
+}
 
 
 

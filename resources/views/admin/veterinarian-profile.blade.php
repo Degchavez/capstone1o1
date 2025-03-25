@@ -210,37 +210,10 @@
                                     
                                     <td class="px-4 py-2 text-gray-700">
                                         @if ($transaction->status == 1)
-                                            {{-- Display details as read-only when status is "Completed" --}}
-                                            <div class="w-full px-4 py-2 text-gray-700 bg-gray-100 border border-gray-300 rounded-md shadow-sm text-sm">
-                                                <p class="text-gray-700">{{ $transaction->details ?? 'No details available.' }}</p>
-                                            </div>
-                                        @else
-                                            {{-- Editable form when transaction is not completed --}}
-                                            <form action="{{ route('update.dets', $transaction->transaction_id) }}" method="POST" class="flex flex-col space-y-2">
-                                                @csrf
-                                                @method('PUT')
-                                            
-                                                <textarea 
-                                                    name="details" 
-                                                    rows="3" 
-                                                    class="w-full px-4 py-2 text-gray-700 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm transition-all duration-200 ease-in-out" 
-                                                    placeholder="Enter transaction details..."
-                                                >{{ old('details', $transaction->details) }}</textarea>
-                                            
-                                                <button type="submit" class="inline-block px-6 py-2 text-white bg-blue-500 hover:bg-blue-600 rounded-lg shadow-md text-sm">
-                                                    Update Details
-                                                </button>
-                                            </form>
-                                        @endif
-                                    </td>
-                                    
-                                    
-
-                                    <td class="px-4 py-2 text-gray-700 " >
-                                        @if ($transaction->status == 1)
                                             <!-- If status is 'Completed', show a button instead of dropdown -->
                                             <td class="px-4 py-2 text-center">
-                                                <a href="{{ route('transactions.view', $transaction->transaction_id) }}" 
+                                                <a href="#" 
+                                                   onclick="openTransactionModal('{{ $transaction->transaction_id }}')"
                                                    class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md transition-all duration-200 ease-in-out hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 flex flex-col">
                                                     <span class="text-white font-mono font-semibold">✔ Successful</span>
                                                     <span class="text-sm">See Transaction Details</span>
@@ -333,6 +306,75 @@
                 this.dataset.previousValue = this.value;
             });
         });
+    </script>
+
+    <!-- Transaction Modal -->
+    <div id="transactionModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Background overlay -->
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+
+            <!-- Modal panel -->
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl sm:w-full">
+                <div class="absolute top-0 right-0 pt-4 pr-4">
+                    <button type="button" onclick="closeTransactionModal()" class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                        <span class="sr-only">Close</span>
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Modal content will be loaded here -->
+                <div id="transactionModalContent" class="p-6">
+                    <div class="flex justify-center">
+                        <svg class="animate-spin -ml-1 mr-3 h-10 w-10 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p class="text-lg font-medium text-gray-700">Loading transaction details...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openTransactionModal(transactionId) {
+            // Show modal
+            document.getElementById('transactionModal').classList.remove('hidden');
+            
+            // Fetch transaction details via AJAX
+            fetch(`/admin/transactions/${transactionId}/details-partial`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('transactionModalContent').innerHTML = html;
+                })
+                .catch(error => {
+                    document.getElementById('transactionModalContent').innerHTML = `
+                        <div class="text-center text-red-500">
+                            <p>Error loading transaction details. Please try again.</p>
+                        </div>
+                    `;
+                    console.error('Error fetching transaction details:', error);
+                });
+        }
+        
+        function closeTransactionModal() {
+            document.getElementById('transactionModal').classList.add('hidden');
+            // Reset content to loading state for next time
+            document.getElementById('transactionModalContent').innerHTML = `
+                <div class="flex justify-center">
+                    <svg class="animate-spin -ml-1 mr-3 h-10 w-10 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="text-lg font-medium text-gray-700">Loading transaction details...</p>
+                </div>
+            `;
+        }
     </script>
 
     </x-app-layout>

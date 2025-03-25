@@ -177,4 +177,19 @@ public function viewTransactionDetails($transactionId)
     return view('admin.transaction-details', compact('transaction'));
 }
 
+public function getTransactionDetailsPartial($transactionId)
+{
+    // Retrieve transaction by 'transaction_id', not 'id'
+    $transaction = Transaction::with([
+        'transactionSubtype', 
+        'owner.user', 
+        'animal', 
+        'vet', 
+        'technician'
+    ])->where('transaction_id', $transactionId)->firstOrFail();
+
+    // Return partial view with transaction data
+    return view('admin.transaction-details', compact('transaction'));
+}
+
 }

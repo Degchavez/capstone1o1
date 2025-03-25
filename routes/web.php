@@ -55,8 +55,14 @@ Route::view('profile', 'profile')
 
 Route::group(['middleware' => 'admin'],function(){
 
-    Route::get('/transactions/{transaction_id}', [TransactionsController::class, 'viewTransactionDetails'])
-    ->name('transactions.view');
+// ... existing code ...
+
+// Route for transaction details partial (for modal)
+Route::get('/admin/transactions/{transactionId}/details-partial', [TransactionsController::class, 'getTransactionDetailsPartial'])
+    ->name('transactions.details-partial')
+    ->middleware(['auth', 'admin']);
+
+// ... existing code ...
 
 
     //Dashboard

@@ -1,4 +1,4 @@
-<x-app-layout>
+
     <div class="min-h-screen bg-gray-50">
         <div class="max-w-7xl mx-auto p-6 lg:p-8">
             <!-- Header Section -->
@@ -201,4 +201,3 @@
             </div>
         </div>
     </div>
-</x-app-layout>
