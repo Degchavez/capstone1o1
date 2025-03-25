@@ -73,9 +73,10 @@ class UserController extends Controller
 
     public function profile($id)
     {
-        $user = User::with('address')->findOrFail($id); // Fetch the user with their address
-        $barangays = Barangay::all(); // Fetch all barangays
-        return view('admin.profile', compact('user', 'barangays')); // Pass data to the view
+        $user = User::with(['address', 'categories']) // Add categories to eager loading
+            ->findOrFail($id);
+        $barangays = Barangay::all();
+        return view('admin.profile', compact('user', 'barangays'));
     }
 
     public function navProfile($id)

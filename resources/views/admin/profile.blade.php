@@ -109,6 +109,8 @@
                             </span>
                         </div>
                     </div>
+
+                    </div>
                 </div>
 
                 <!-- Animal Owner Specific Info -->
@@ -124,14 +126,39 @@
                             <p class="text-gray-600">{{ $user->owner->civil_status ?? 'N/A' }}</p>
                         </div>
 
-                        <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
-                            <div class="flex items-center space-x-3 mb-4">
-                                <div class="p-2 bg-indigo-100 rounded-lg">
-                                    <i class="fas fa-tags text-indigo-600"></i>
-                                </div>
-                                <h3 class="font-semibold text-gray-900">Category</h3>
+                        
+                    <!-- Categories -->
+                    <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="p-2 bg-indigo-100 rounded-lg">
+                                <i class="fas fa-tags text-indigo-600"></i>
                             </div>
-                            <p class="text-gray-600">{{ $user->owner->category ?? 'N/A' }}</p>
+                            <h3 class="font-semibold text-gray-900">Categories</h3>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            @if($user->categories && $user->categories->count() > 0)
+                                @foreach($user->categories as $category)
+                                    @php
+                                        $colorClasses = [
+                                            1 => 'bg-blue-100 text-blue-800',
+                                            2 => 'bg-green-100 text-green-800',
+                                            3 => 'bg-purple-100 text-purple-800',
+                                            4 => 'bg-yellow-100 text-yellow-800',
+                                            5 => 'bg-pink-100 text-pink-800',
+                                            6 => 'bg-indigo-100 text-indigo-800',
+                                            7 => 'bg-red-100 text-red-800',
+                                            'default' => 'bg-gray-100 text-gray-800'
+                                        ];
+                                        $classes = $colorClasses[$category->id] ?? $colorClasses['default'];
+                                    @endphp
+                                    
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ $classes }}">
+                                        {{ $category->name }}
+                                    </span>
+                                @endforeach
+                            @else
+                                <span class="text-gray-500">No categories assigned</span>
+                            @endif
                         </div>
                     </div>
                 @endif
