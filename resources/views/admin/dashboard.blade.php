@@ -164,11 +164,10 @@
     </table>
 </div>
 
-
-            <!-- Pagination -->
-            <div class="mt-6">
-                {{ $recentTransactions->links() }}
-            </div>
+<!-- Pagination -->
+<div class="mt-6">
+    {{ $recentTransactions->appends(request()->query())->links() }}
+</div>
         </div>
     </div>
 </x-app-layout>

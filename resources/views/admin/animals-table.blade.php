@@ -290,12 +290,13 @@
                     this.form.submit();
                 });
             });
-
+        
             // Debounce search input
-            let timeout = null;
+            var searchTimeout = null; // Changed from 'let' to 'var'
+        
             document.getElementById('searchInput')?.addEventListener('input', function() {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
                     this.form.submit();
                 }, 500);
             });

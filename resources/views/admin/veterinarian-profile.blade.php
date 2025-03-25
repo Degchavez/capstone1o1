@@ -1,5 +1,5 @@
     <x-app-layout>
-        <div class="container mx-auto px-4 py-6 bg-gray-50 rounded-lg shadow-lg">
+        <div class="container mx-auto px-4 py-6 rounded-lg shadow-lg">
             <!-- Profile Section -->
             <div class="flex items-center space-x-6 mb-8 bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition duration-300 ease-in-out">
                 <img class="w-36 h-36 object-cover rounded-full border-4 border-green-500 shadow-lg hover:scale-105 transition-transform duration-300" 
@@ -224,24 +224,38 @@
                                     </td>
                                     
 
-                                    <td class="px-4 py-2 text-gray-700">
-                                        <form action="{{ route('updateStatus', $transaction->transaction_id) }}" method="POST" class="flex items-center" id="statusForm-{{ $transaction->transaction_id }}">
-                                            @csrf
-                                            @method('PUT')
-                                            <select 
-                                                name="status" 
-                                                class="px-8 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-gray-700 font-medium transition-all duration-200 ease-in-out" 
-                                                onchange="confirmStatusChange(event, {{ $transaction->transaction_id }})">
-                                                @if ($transaction->status == 0)
-                                                    <option value="0" {{ $transaction->status == 0 ? 'selected' : '' }} disabled>
-                                                        Pending
-                                                    </option>
-                                                @endif
-                                                <option value="1" {{ $transaction->status == 1 ? 'selected' : '' }}>Completed</option>
-                                                <option value="2" {{ $transaction->status == 2 ? 'selected' : '' }}>Cancelled</option>
-                                            </select>
-                                        </form>
+                                    <td class="px-4 py-2 text-gray-700 " >
+                                        @if ($transaction->status == 1)
+                                            <!-- If status is 'Completed', show a button instead of dropdown -->
+                                            <button 
+                                                class="px-6 py-2 bg-green-500 text-white font-medium rounded-md shadow-sm transition-all duration-200 ease-in-out hover:bg-green-600 flex flex-col"
+                                                onclick="viewTransactionDetails({{ $transaction->transaction_id }})">                                      
+                                                <span class="text-blue font-mono font-semibold">Successful </span>
+                                                <span>See Transaction Details</span>
+                                            </button>
+                                        @else
+                                            <!-- If not 'Completed', show dropdown -->
+                                            <form action="{{ route('updateStatus', $transaction->transaction_id) }}" method="POST" class="flex items-center" id="statusForm-{{ $transaction->transaction_id }}">
+                                                @csrf
+                                                @method('PUT')
+                                                <select 
+                                                    name="status" 
+                                                    class="px-8 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-gray-700 font-medium transition-all duration-200 ease-in-out" 
+                                                    onchange="confirmStatusChange(event, {{ $transaction->transaction_id }})">
+                                                    
+                                                    @if ($transaction->status == 0)
+                                                        <option value="0" selected disabled>Pending</option>
+                                                        <option value="1">Completed</option>
+                                                        <option value="2">Cancelled</option>
+                                                    @elseif ($transaction->status == 2)
+                                                        <option value="2" selected>Cancelled</option>
+                                                        <option value="1">Completed</option>
+                                                    @endif
+                                                </select>
+                                            </form>
+                                        @endif
                                     </td>
+                                    
                                     
                                     
                                 </tr>
