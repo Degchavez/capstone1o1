@@ -57,7 +57,7 @@
                                 </div>
                                 <div>
                                     <p class="text-xs text-gray-500">Owner</p>
-                                    <a href="{{ route('vet.profile-owner', ['owner_id' => $animal->owner->owner_id]) }}" 
+                                    <a href="{{ route('owners.profile-owner', ['owner_id' => $animal->owner->owner_id]) }}" 
                                        class="text-sm font-medium text-blue-600 hover:text-blue-800">
                                         {{ $animal->owner->user->complete_name }}
                                     </a>

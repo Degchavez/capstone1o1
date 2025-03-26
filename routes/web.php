@@ -52,19 +52,15 @@ Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
 
-
-Route::group(['middleware' => 'admin'],function(){
-
-// ... existing code ...
-
 // Route for transaction details partial (for modal)
 Route::get('/admin/transactions/{transactionId}/details-partial', [TransactionsController::class, 'getTransactionDetailsPartial'])
-    ->name('transactions.details-partial')
-    ->middleware(['auth', 'admin']);
+->name('transactions.details-partial');
 
-    Route::get('/transaction/{transaction}/pdf', [TransactionsController::class, 'downloadPdf'])
-    ->name('transaction.download.pdf');
+Route::get('/transaction/{transaction}/pdf', [TransactionsController::class, 'downloadPdf'])
+->name('transaction.download.pdf');
 
+
+Route::group(['middleware' => 'admin'],function(){
 
     //Dashboard
     Route::get('/admin/dashboard',[AdminController::class,'loadAdminDashboard'])
