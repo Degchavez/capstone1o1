@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 
 
@@ -157,7 +158,25 @@ class UserController extends Controller
             );
     
             // Update categories
-            $user->categories()->sync($request->selectedCategories ?? []);
+            if (isset($request->selectedCategories)) {
+                // Convert all values to integers and filter out invalid ones
+                $categories = [];
+                foreach ($request->selectedCategories as $categoryId) {
+                    // Include the category if it's a valid number (including 0)
+                    if (is_numeric($categoryId) || $categoryId === '0') {
+                        $categories[] = (int)$categoryId;
+                    }
+                }
+                
+                // Log the categories being processed
+                Log::info('Categories being synced:', $categories);
+                
+                // Sync the categories
+                $user->categories()->sync($categories);
+            } else {
+                // If no categories selected, detach all
+                $user->categories()->detach();
+            }
         } else {
             // If user is not an owner, remove owner data and category associations
             if ($user->owner) {
@@ -272,57 +291,101 @@ class UserController extends Controller
      */
     public function register(Request $request)
     {
-        // Update validation rules
-        $request->validate([
-            'complete_name' => 'required|string|max:255',
-            'contact_no' => 'required|string|max:15',
-            'gender' => 'required|string|max:10',
-            'birth_date' => ['nullable', 'date', 'before_or_equal:today'],
-            'email' => 'required|email|unique:users,email',
-            'barangay_id' => 'required|integer|exists:barangays,id',
-            'street' => 'required|string|max:255',
-            'civil_status' => 'required|string|max:20',
-            'category_id' => 'required|exists:categories,id',
-            'permit' => 'nullable|string|max:255',
-        ]);
+        try {
+            DB::beginTransaction();
 
-        // Generate a random password
-        $randomPassword = Str::random(8);
+            // Validate inputs
+            $validated = $request->validate([
+                'complete_name' => ['required', 'string', 'max:255'],
+                'contact_no' => ['nullable', 'string', 'max:15'],
+                'gender' => ['required', 'string'],
+                'birth_date' => ['nullable', 'date'],
+                'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+                'civil_status' => ['required', 'string'],
+                'barangay_id' => ['required', 'exists:barangays,id'],
+                'street' => ['nullable', 'string', 'max:255'],
+                'selectedCategories' => ['sometimes', 'array'],
+                'selectedCategories.*' => ['exists:categories,id'],
+                'profile_image' => ['nullable', 'image', 'max:2048'],
+            ]);
 
-        // Create the user
-        $user = new User();
-        $user->complete_name = $request->complete_name;
-        $user->contact_no = $request->contact_no;
-        $user->gender = $request->gender;
-        $user->birth_date = $request->birth_date;
-        $user->status = 1;
-        $user->email = $request->email;
-        $user->role = 1;
-        $user->password = bcrypt($randomPassword);
-        $user->save();
+            // Generate random password
+            $randomPassword = Str::random(8);
+            
+            // Create user
+            $user = new User();
+            $user->complete_name = $validated['complete_name'];
+            $user->role = 1; // Owner
+            $user->contact_no = $validated['contact_no'];
+            $user->gender = $validated['gender'];
+            $user->birth_date = $validated['birth_date'];
+            $user->status = 1; // Active
+            $user->email = $validated['email'];
+            $user->password = Hash::make($randomPassword);
+            $user->save();
 
-        // Register the address
-        $address = new Address();
-        $address->user_id = $user->user_id;
-        $address->barangay_id = $request->barangay_id;
-        $address->street = $request->street;
-        $address->save();
+            // Handle profile image if uploaded
+            if ($request->hasFile('profile_image')) {
+                $imagePath = $request->file('profile_image')->store('profile-images', 'public');
+                $user->profile_image = $imagePath;
+                $user->save();
+            }
 
-        // Create the owner record with category_id
-        $owner = new Owner();
-        $owner->user_id = $user->user_id;
-        $owner->civil_status = $request->civil_status;
-        $owner->category_id = $request->category_id;
-        $owner->permit = 1;
-        $owner->save();
+            // Create owner record
+            $owner = new Owner();
+            $owner->user_id = $user->user_id;
+            $owner->civil_status = $validated['civil_status'];
+            $owner->permit = 1; // Default active permit
+            $owner->save();
 
-        // Send welcome email
-        Mail::to($request->email)->send(new WelcomeEmail($user, $randomPassword));
+            // Create address
+            $address = new Address();
+            $address->user_id = $user->user_id;
+            $address->barangay_id = $validated['barangay_id'];
+            $address->street = $validated['street'] ?? '';
+            $address->save();
 
-        return redirect()->route('admin-owners')
-            ->with('message', 'User and owner registered successfully, and password has been emailed!');
+            // Attach categories if provided
+            if ($request->has('selectedCategories') && is_array($request->selectedCategories)) {
+                Log::info('Attaching categories:', $request->selectedCategories);
+                
+                // Make sure each category ID is valid
+                $validCategoryIds = [];
+                foreach ($request->selectedCategories as $categoryId) {
+                    if (is_numeric($categoryId)) {
+                        $validCategoryIds[] = (int)$categoryId;
+                    }
+                }
+                
+                if (!empty($validCategoryIds)) {
+                    $user->categories()->attach($validCategoryIds);
+                } else {
+                    Log::warning('No valid category IDs found to attach');
+                }
+            } else {
+                Log::info('No categories selected');
+            }
+
+            DB::commit();
+
+            // Send welcome email in background
+            dispatch(function () use ($user, $randomPassword) {
+                Mail::to($user->email)->send(new WelcomeEmail($user, $randomPassword));
+            })->afterResponse();
+
+            return redirect()
+                ->route('admin-owners')
+                ->with('message', 'Owner registered successfully!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            // For debugging
+            // dd($e->getMessage());
+            return back()
+                ->withInput()
+                ->with('error', 'Failed to register owner: ' . $e->getMessage());
+        }
     }
-    
 
 
     public function ownerList_edit($owner_id)
@@ -347,6 +410,9 @@ class UserController extends Controller
     public function ownerList_update(Request $request, $owner_id)
     {
         try {
+            // Log the incoming request data for debugging
+            Log::info('Owner update request data:', $request->all());
+            
             // Validation
             $validated = $request->validate([
                 'complete_name' => 'required|string|max:100',
@@ -360,7 +426,7 @@ class UserController extends Controller
                 'profile_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
                 'civil_status' => 'nullable|string|max:50',
                 'selectedCategories' => 'nullable|array',
-                'selectedCategories.*' => 'nullable|integer'
+                'selectedCategories.*' => 'exists:categories,id'
             ]);
 
             DB::beginTransaction();
@@ -384,7 +450,7 @@ class UserController extends Controller
                 ['user_id' => $user->user_id],
                 [
                     'barangay_id' => $validated['barangay_id'],
-                    'street' => $validated['street'],
+                    'street' => $validated['street'] ?? '',
                 ]
             );
 
@@ -392,20 +458,37 @@ class UserController extends Controller
             $owner = $user->owner()->updateOrCreate(
                 ['user_id' => $user->user_id],
                 [
-                    'civil_status' => $validated['civil_status'],
+                    'civil_status' => $validated['civil_status'] ?? '',
                     'permit' => 1,
                 ]
             );
 
             // Update categories
             if (isset($validated['selectedCategories'])) {
-                // Filter out "0" values and empty strings
-                $categories = array_filter($validated['selectedCategories'], function($value) {
-                    return !empty($value) && $value !== "0";
-                });
-                $user->categories()->sync($request->selectedCategories);
-
+                // Convert all values to integers and filter out invalid ones
+                $categories = [];
+                foreach ($validated['selectedCategories'] as $categoryId) {
+                    // Include the category if it's a valid number (including 0)
+                    if (is_numeric($categoryId) || $categoryId === '0') {
+                        $categories[] = (int)$categoryId;
+                    }
+                }
+                
+                // Log the categories being processed
+                Log::info('Categories being synced:', $categories);
+                
+                // Sync the categories
+                $user->categories()->sync($categories);
+            } else {
+                // If no categories selected, detach all
+                $user->categories()->detach();
             }
+
+            // Verify that categories were updated correctly
+            $updatedCategories = $user->categories()->pluck('categories.id')->toArray();
+            Log::info('Updated categories for user ' . $user->user_id, [
+                'updated_categories' => $updatedCategories
+            ]);
 
             DB::commit();
             
@@ -413,6 +496,11 @@ class UserController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Error updating owner: ' . $e->getMessage(), [
+                'user_id' => $owner_id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return redirect()->back()
                 ->withInput()
                 ->withErrors(['error' => 'An error occurred while updating the profile: ' . $e->getMessage()]);

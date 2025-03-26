@@ -103,23 +103,26 @@
 
     <!-- Category -->
     <div>
-    <x-input-label for="category" :value="__('Categories')" class="text-lg font-semibold text-gray-800" />
-    <div class="space-y-2">
-        @foreach($categories as $category)
-            <div class="flex items-center">
-                <input 
-                    type="checkbox" 
-                    id="category_{{ $category->id }}" 
-                    wire:model="selectedCategories" 
-                    value="{{ $category->id }}" 
-                    class="mr-2"
-                />
-                <label for="category_{{ $category->id }}" class="text-gray-800">{{ $category->name }}</label>
-            </div>
-        @endforeach
+        <x-input-label for="category" :value="__('Categories')" class="text-lg font-semibold text-gray-800" />
+        <div class="space-y-2">
+            @foreach($categories as $category)
+                <div class="flex items-center">
+                    <input 
+                        type="checkbox" 
+                        id="category_{{ $category->id }}" 
+                        name="selectedCategories[]" 
+                        value="{{ $category->id }}" 
+                        class="mr-2"
+                        {{ in_array($category->id, old('selectedCategories', [])) ? 'checked' : '' }}
+                    />
+                    <label for="category_{{ $category->id }}" class="text-gray-800">{{ $category->name }}</label>
+                </div>
+            @endforeach
+        </div>
+        @if($errors->has('selectedCategories'))
+            <p class="mt-1 text-sm text-red-600">{{ $errors->first('selectedCategories') }}</p>
+        @endif
     </div>
-    <x-input-error :messages="$errors->get('selectedCategories')" class="mt-2 text-sm text-red-500" />
-</div>
 
 </div>
 
