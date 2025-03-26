@@ -101,7 +101,7 @@
                                 </div>
                                 <div class="space-y-1">
                                     <p class="text-sm font-medium text-gray-900">
-                                        <a href="{{ route('animals.profile', $transaction->animal->animal_id) }}" class="hover:text-blue-600">
+                                        <a href="#" class="hover:text-blue-600">
                                             {{ $transaction->animal->name }}
                                         </a>
                                     </p>
@@ -135,7 +135,7 @@
                                 </div>
                                 <div class="space-y-1">
                                     <p class="text-sm font-medium text-gray-900">
-                                        <a href="{{ route('owners.profile-owner', $transaction->owner->owner_id) }}" class="hover:text-blue-600">
+                                        <a href="#" class="hover:text-blue-600">
                                             {{ optional($transaction->owner->user)->complete_name ?? 'N/A' }}
                                         </a>
                                     </p>
@@ -163,7 +163,7 @@
                                     <div>
                                         <p class="text-sm font-medium text-gray-900">
                                             @if($transaction->vet)
-                                                <a href="{{ route('admin.veterinarian.profile', $transaction->vet->user_id) }}" class="hover:text-blue-600">
+                                                <a href="#" class="hover:text-blue-600">
                                                     {{ $transaction->vet->complete_name }}
                                                 </a>
                                             @else

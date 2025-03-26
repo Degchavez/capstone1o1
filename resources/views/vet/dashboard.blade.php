@@ -159,12 +159,12 @@
                                     </td>
                                     
                                     <!-- Display Transaction Status -->
-                                    <td class="px-6 py-4 whitespace-nowrap">
+                                    <td class="px-2 py-2 whitespace-nowrap">
                                         @if ($transaction->status == 0)
                                             <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Pending</span>
                                         @elseif ($transaction->status == 1)
-                                        <div class="flex flex-col items-start space-y-2">
-                                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
+                                        <div class="flex flex-col items-start space-y-2 justify-center items-center ">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 ">
                                                 Completed
                                             </span>
                                             
@@ -195,7 +195,7 @@
         <!-- Reports Section with improved cards -->
         
     </div>
-    al -->
+
 <div id="transactionModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <!-- Background overlay -->
