@@ -135,7 +135,7 @@ new class extends Component
                             class="px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 hover:bg-green-50 hover:text-green-600" wire:navigate>
                             {{ __('Profile') }}
                         </x-nav-link>
-                        <x-nav-link :href="route('vet.veterinarian.profile', ['user_id' => auth()->user()->user_id])"
+                        <x-nav-link :href="route('reports.index')"
                             :active="request()->routeIs('vet.veterinarian.profile')"
                             class="px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 hover:bg-green-50 hover:text-green-600" wire:navigate>
                             {{ __('Generate Report') }}

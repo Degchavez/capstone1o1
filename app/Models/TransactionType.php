@@ -12,6 +12,6 @@ class TransactionType extends Model
 
     public function subtypes()
     {
-        return $this->hasMany(TransactionSubtype::class, 'transaction_type_id');
+        return $this->hasMany(TransactionSubtype::class);
     }
 }

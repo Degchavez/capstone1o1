@@ -325,6 +325,14 @@ Route::group(['middleware' => 'owner'], function () {
 
 Route::group(['middleware' => 'vet'], function () {
 
+    Route::prefix('reports')->group(function () {
+        Route::get('/', [App\Http\Controllers\ReportController::class, 'index'])->name('reports.index');
+        Route::post('/transactions', [App\Http\Controllers\ReportController::class, 'generateTransactionReport'])->name('reports.transactions');
+        Route::post('/animal-health', [App\Http\Controllers\ReportController::class, 'generateAnimalHealthReport'])->name('reports.animal-health');
+        Route::get('/download/{report}', [App\Http\Controllers\ReportController::class, 'download'])->name('reports.download');
+        Route::delete('/reports/{report}', [App\Http\Controllers\ReportController::class, 'delete'])->name('reports.delete');
+    });
+
 Route::get('vet/veterinarian/{user_id}', [VetController::class, 'showVeterinarianProfile'])->name('vet.veterinarian.profile');
 
 Route::put('/update-technician/{transaction_id}', [VetController::class, 'updateTechnician'])->name('updateTechnician');
