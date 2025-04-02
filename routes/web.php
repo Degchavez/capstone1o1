@@ -331,7 +331,14 @@ Route::group(['middleware' => 'vet'], function () {
         Route::post('/animal-health', [App\Http\Controllers\ReportController::class, 'generateAnimalHealthReport'])->name('reports.animal-health');
         Route::get('/download/{report}', [App\Http\Controllers\ReportController::class, 'download'])->name('reports.download');
         Route::delete('/reports/{report}', [App\Http\Controllers\ReportController::class, 'delete'])->name('reports.delete');
+    // ... existing code ...
+
     });
+    // Replace or add this route outside of any route groups
+Route::post('/api/reports/preview', [App\Http\Controllers\ReportController::class, 'preview'])
+->middleware('auth')
+->name('reports.preview');
+
 
 Route::get('vet/veterinarian/{user_id}', [VetController::class, 'showVeterinarianProfile'])->name('vet.veterinarian.profile');
 
