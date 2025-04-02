@@ -705,12 +705,13 @@ public function getBreeds($species_id)
            'barangay_id' => 'required|exists:barangays,id',
            'street' => 'nullable|string|max:255',
            'profile_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-           'category_id' => 'required|exists:categories,id',
+           'selectedCategories' => 'required|array',
+           'selectedCategories.*' => 'exists:categories,id'
        ]);
-
+   
        $user = User::findOrFail($id);
        $transaction = Owner::where('user_id', $user->user_id)->first();
-
+   
        // Handle profile image upload
        if ($request->hasFile('profile_image')) {
            if ($user->profile_image) {
@@ -719,7 +720,7 @@ public function getBreeds($species_id)
            $imagePath = $request->file('profile_image')->store('profile_images', 'public');
            $user->profile_image = $imagePath;
        }
-
+   
        $user->role = 1;
        $user->update($request->only([
            'complete_name',
@@ -730,26 +731,29 @@ public function getBreeds($species_id)
            'status',
            'email',
        ]));
-
+   
        // Update address
        $user->address()->updateOrCreate(
            ['user_id' => $user->user_id],
            $request->only(['barangay_id', 'street'])
        );
-
-       // Update owner with category_id
+   
+       // Update owner
        $user->owner()->updateOrCreate(
            ['user_id' => $user->user_id],
            [
                'civil_status' => $request->civil_status,
-               'category_id' => $request->category_id,
                'permit' => 1
            ]
        );
-
+   
+       // Sync categories (this will remove old categories and add new ones)
+       $user->categories()->sync($request->selectedCategories);
+   
        return redirect()->route('owners.profile-owner', ['owner_id' => $transaction->owner_id])
            ->with('message', 'Profile updated successfully.');
    }
+   
 
    public function showAnimalProfile(Request $request, $animal_id)
    {

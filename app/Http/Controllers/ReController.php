@@ -337,8 +337,7 @@ public function ownerList_update(Request $request, $owner_id)
             'barangay_id' => 'required|exists:barangays,id',
             'street' => 'nullable|string|max:255',
             'profile_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'civil_status' => 'nullable|string|max:50',
-            'selectedCategories' => 'nullable|array',
+            'selectedCategories' => 'required|array',
             'selectedCategories.*' => 'exists:categories,id'
         ]);
 
@@ -376,26 +375,8 @@ public function ownerList_update(Request $request, $owner_id)
             ]
         );
 
-        // Update categories
-        if (isset($validated['selectedCategories'])) {
-            // Convert all values to integers and filter out invalid ones
-            $categories = [];
-            foreach ($validated['selectedCategories'] as $categoryId) {
-                // Include the category if it's a valid number (including 0)
-                if (is_numeric($categoryId) || $categoryId === '0') {
-                    $categories[] = (int)$categoryId;
-                }
-            }
-            
-            // Log the categories being processed
-            Log::info('Categories being synced:', $categories);
-            
-            // Sync the categories
-            $user->categories()->sync($categories);
-        } else {
-            // If no categories selected, detach all
-            $user->categories()->detach();
-        }
+        // Sync categories (this will remove old categories and add new ones)
+        $user->categories()->sync($validated['selectedCategories']);
 
         // Verify that categories were updated correctly
         $updatedCategories = $user->categories()->pluck('categories.id')->toArray();
@@ -541,9 +522,10 @@ public function showProfile(Request $request, $owner_id)
 
 public function owner_edit($id)
 {
-    $user = User::with('address')->findOrFail($id); // Fetch the user with their address
-    $barangays = Barangay::all(); // Fetch all barangays
-    return view('receptionist.owner-edit', compact('user', 'barangays')); // Pass data to the view
+    $user = User::with(['address', 'owner'])->findOrFail($id);
+    $barangays = Barangay::all();
+    $categories = Category::all();
+    return view('receptionist.owner-edit', compact('user', 'barangays','categories')); // Pass data to the view
 }
 
 public function owner_update(Request $request, $id)
@@ -557,28 +539,24 @@ public function owner_update(Request $request, $id)
         'email' => 'required|email|max:100|unique:users,email,' . $id . ',user_id',
         'barangay_id' => 'required|exists:barangays,id',
         'street' => 'nullable|string|max:255',
-        'profile_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048', // Added validation for image
+        'profile_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        'selectedCategories' => 'required|array',
+        'selectedCategories.*' => 'exists:categories,id'
     ]);
 
     $user = User::findOrFail($id);
-
     $transaction = Owner::where('user_id', $user->user_id)->first();
 
-    // Handle profile image upload if a file is provided
+    // Handle profile image upload
     if ($request->hasFile('profile_image')) {
-        // Delete old image if it exists
         if ($user->profile_image) {
             Storage::disk('public')->delete($user->profile_image);
         }
-    
-        // Store the new image
         $imagePath = $request->file('profile_image')->store('profile_images', 'public');
         $user->profile_image = $imagePath;
     }
-    
-     // Set the role to 1 explicitly
- $user->role = 1;
-    // Update user data
+
+    $user->role = 1;
     $user->update($request->only([
         'complete_name',
         'role',
@@ -589,20 +567,26 @@ public function owner_update(Request $request, $id)
         'email',
     ]));
 
-    // Update or create the address
+    // Update address
     $user->address()->updateOrCreate(
-        ['user_id' => $user->user_id], // Condition to find the address
-        $request->only(['barangay_id', 'street']) // Address fields to update
+        ['user_id' => $user->user_id],
+        $request->only(['barangay_id', 'street'])
     );
 
-    // Update or create the owner's data
+    // Update owner
     $user->owner()->updateOrCreate(
-        ['user_id' => $user->user_id], // Match condition
-        $request->only(['civil_status', 'category']) + ['permit' => 1] // Data to update, with permit added
+        ['user_id' => $user->user_id],
+        [
+            'civil_status' => $request->civil_status,
+            'permit' => 1
+        ]
     );
-    return redirect()->route('rec.profile-owner', ['owner_id' => $transaction->owner_id])
-    ->with('message', 'Profile updated successfully.');
 
+    // Sync categories (this will remove old categories and add new ones)
+    $user->categories()->sync($request->selectedCategories);
+
+    return redirect()->route('rec.profile-owner', ['owner_id' => $transaction->owner_id])
+        ->with('message', 'Profile updated successfully.');
 }
 
 
