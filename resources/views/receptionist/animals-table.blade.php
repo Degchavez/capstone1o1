@@ -1,202 +1,283 @@
 <x-app-layout>
-    <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-[96rem] mx-auto">
-        <!-- Page header -->
-        <div class="sm:flex sm:justify-between sm:items-center mb-5">
-            <!-- Left: Title -->
-            <div class="mb-4 sm:mb-0">
-                <h1 class="text-2xl md:text-3xl text-slate-800 font-bold">Animals</h1>
-            </div>
-
-            <!-- Right: Actions -->
-            <div class="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
-                <!-- Add animal button -->
-                <a class="btn bg-indigo-500 hover:bg-indigo-600 text-white" href="{{ route('rec.add-animal-form') }}">
-                    <svg class="w-4 h-4 fill-current opacity-50 shrink-0" viewBox="0 0 16 16">
-                        <path d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
+    <div class="min-h-screen bg-gray-50/30 p-4 lg:p-8">
+        <!-- Main Container -->
+        <div class="mx-auto max-w-[96rem] space-y-6">
+            <!-- Header Section -->
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-6 rounded-xl shadow-sm">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Animals</h1>
+                    <p class="text-sm text-gray-500">Manage and monitor all registered animals</p>
+                </div>
+                <a href="{{ route('rec.add-animal-form') }}" 
+                   class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors duration-150 ease-in-out">
+                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"/>
                     </svg>
-                    <span class="hidden xs:block ml-2">Add Animal</span>
+                    Add Animal
                 </a>
             </div>
-        </div>
 
-        <!-- Table -->
-        <div class="bg-white border border-slate-200 rounded-sm shadow-lg">
-            <!-- Search and filters -->
-            <div class="border-b border-slate-200">
+            <!-- Filters Section -->
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="text-lg font-semibold text-gray-900">Filters</h2>
+                    <a href="{{ route('rec-animals') }}" 
+                       class="inline-flex items-center px-3 py-1.5 bg-gray-50 text-gray-600 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors duration-150 ease-in-out">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Reset Filters
+                    </a>
+                </div>
                 <form class="p-4" method="GET" action="{{ route('rec-animals') }}" id="filterForm">
-                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                        <!-- Search field -->
-                        <div>
-                            <label class="block text-sm font-medium mb-1" for="search">Search</label>
-                            <input id="search" name="search" class="form-input w-full" type="text" placeholder="Search by name…" value="{{ request('search') }}" oninput="document.getElementById('filterForm').submit()">
+                    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        <!-- Search -->
+                        <div class="relative">
+                            <input type="text" name="search" 
+                                   class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                                   placeholder="Search animals..."
+                                   value="{{ request('search') }}"
+                                   oninput="document.getElementById('filterForm').submit()">
+                            <svg class="absolute left-3 top-2.5 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
                         </div>
+
                         <!-- Species -->
                         <div>
-                            <label class="block text-sm font-medium mb-1" for="species">Species</label>
-                            <select id="species" name="species_id" class="form-select w-full" onchange="document.getElementById('filterForm').submit()">
+                            <select name="species_id" 
+                                    class="w-full border border-gray-200 rounded-lg text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                                    onchange="document.getElementById('filterForm').submit()">
                                 <option value="">All Species</option>
                                 @foreach($species as $specie)
-                                    <option value="{{ $specie->id }}" {{ request('species_id') == $specie->id ? 'selected' : '' }}>{{ $specie->name }}</option>
+                                    <option value="{{ $specie->id }}" {{ request('species_id') == $specie->id ? 'selected' : '' }}>
+                                        {{ $specie->name }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
+
                         <!-- Breed -->
                         <div>
-                            <label class="block text-sm font-medium mb-1" for="breed">Breed</label>
-                            <select id="breed" name="breed_id" class="form-select w-full" onchange="document.getElementById('filterForm').submit()">
+                            <select name="breed_id" 
+                                    class="w-full border border-gray-200 rounded-lg text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                                    onchange="document.getElementById('filterForm').submit()">
                                 <option value="">All Breeds</option>
                                 @foreach($breeds as $breed)
-                                    <option value="{{ $breed->id }}" {{ request('breed_id') == $breed->id ? 'selected' : '' }}>{{ $breed->name }}</option>
+                                    <option value="{{ $breed->id }}" {{ request('breed_id') == $breed->id ? 'selected' : '' }}>
+                                        {{ $breed->name }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
+
                         <!-- Owner -->
                         <div>
-                            <label class="block text-sm font-medium mb-1" for="owner">Owner</label>
-                            <select id="owner" name="owner_id" class="form-select w-full" onchange="document.getElementById('filterForm').submit()">
+                            <select name="owner_id" 
+                                    class="w-full border border-gray-200 rounded-lg text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                                    onchange="document.getElementById('filterForm').submit()">
                                 <option value="">All Owners</option>
                                 @foreach($owners as $owner)
-                                    <option value="{{ $owner->owner_id }}" {{ request('owner_id') == $owner->owner_id ? 'selected' : '' }}>{{ $owner->user->complete_name }}</option>
+                                    <option value="{{ $owner->owner_id }}" {{ request('owner_id') == $owner->owner_id ? 'selected' : '' }}>
+                                        {{ $owner->user->complete_name }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
-                        <!-- Date range -->
+
+                        <!-- Date Range -->
                         <div>
-                            <label class="block text-sm font-medium mb-1">Date Range</label>
-                            <div class="flex items-center space-x-2">
-                                <input type="date" name="fromDate" class="form-input w-full text-sm" value="{{ request('fromDate') }}" onchange="this.form.submit()">
-                                <span class="text-slate-400">-</span>
-                                <input type="date" name="toDate" class="form-input w-full text-sm" value="{{ request('toDate') }}" onchange="this.form.submit()">
+                            <div class="flex space-x-2">
+                                <input type="date" name="fromDate" 
+                                       class="w-full border border-gray-200 rounded-lg text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                                       value="{{ request('fromDate') }}"
+                                       onchange="document.getElementById('filterForm').submit()">
+                                <input type="date" name="toDate" 
+                                       class="w-full border border-gray-200 rounded-lg text-sm focus:border-geen-500 focus:ring-1 focus:ring-green-500"
+                                       value="{{ request('toDate') }}"
+                                       onchange="document.getElementById('filterForm').submit()">
                             </div>
-                        </div>
-                        <!-- Reset button -->
-                        <div class="flex items-end">
-                            <a href="{{ route('rec-animals') }}" class="btn border-slate-200 hover:border-slate-300 text-slate-600">
-                                <svg class="w-4 h-4 fill-current" viewBox="0 0 16 16">
-                                    <path d="M7.2 11.2c-.85 0-1.65-.33-2.25-.93-.6-.6-.93-1.4-.93-2.25 0-.85.33-1.65.93-2.25.6-.6 1.4-.93 2.25-.93.85 0 1.65.33 2.25.93.6.6.93 1.4.93 2.25 0 .85-.33 1.65-.93 2.25-.6.6-1.4.93-2.25.93zm0-8c-1.36 0-2.64.53-3.6 1.49-.96.96-1.49 2.24-1.49 3.6 0 1.36.53 2.64 1.49 3.6.96.96 2.24 1.49 3.6 1.49 1.36 0 2.64-.53 3.6-1.49.96-.96 1.49-2.24 1.49-3.6 0-1.36-.53-2.64-1.49-3.6-.96-.96-2.24-1.49-3.6-1.49z"/>
-                                </svg>
-                                <span class="ml-2">Reset</span>
-                            </a>
                         </div>
                     </div>
                 </form>
             </div>
 
-            <!-- Table -->
-            <div class="overflow-x-auto">
-                <table class="table-auto w-full">
-                    <!-- Table header -->
-                    <thead class="text-xs font-semibold uppercase text-slate-500 bg-slate-50 border-t border-b border-slate-200">
-                        <tr>
-                            <th class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                                <span class="font-semibold text-left">Photo</span>
-                            </th>
-                            <th class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                                <span class="font-semibold text-left">Name</span>
-                            </th>
-                            <th class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                                <span class="font-semibold text-left">Owner</span>
-                            </th>
-                            <th class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                                <span class="font-semibold text-left">Species & Breed</span>
-                            </th>
-                            <th class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                                <span class="font-semibold text-left">Latest Veterinarian</span>
-                            </th>
-                            <th class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                                <span class="font-semibold text-left">Latest Transaction</span>
-                            </th>
-                            <th class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                                <span class="font-semibold text-left">Vaccination</span>
-                            </th>
-                            <th class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                                <span class="font-semibold text-left">Created</span>
-                            </th>
-                            <th class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                                <span class="font-semibold text-left">Actions</span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <!-- Table body -->
-                    <tbody class="text-sm divide-y divide-slate-200">
-                        @foreach($animals as $animal)
+            <!-- Table Section -->
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
                             <tr>
-                                <td class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                                    <div class="w-10 h-10 shrink-0">
-                                        <img class="w-10 h-10 rounded-full" src="{{ asset($animal->photo_front ? 'storage/' . $animal->photo_front : 'assets/default-avatar.png') }}" alt="Animal photo">
-                                    </div>
-                                </td>
-                                <td class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                                    <a href="{{ route('rec.profile', ['animal_id' => $animal->animal_id]) }}" class="font-medium text-indigo-500 hover:text-indigo-600">{{ $animal->name }}</a>
-                                </td>
-                                <td class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                                    <div class="font-medium">
-                                        <a href="{{ route('rec.profile-owner', ['owner_id' => $animal->owner->owner_id]) }}" class="text-indigo-500 hover:text-indigo-600">
-                                            {{ $animal->owner->user->complete_name }}
-                                        </a>
-                                    </div>
-                                    <div class="text-slate-500 text-xs">{{ $animal->owner->user->contact_no }}</div>
-                                </td>
-                                <td class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                                    <div class="font-medium text-slate-800">{{ $animal->species->name ?? 'N/A' }}</div>
-                                    <div class="text-slate-500 text-xs">{{ $animal->breed->name ?? 'N/A' }}</div>
-                                </td>
-                                <td class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                                    @if($animal->transactions->isNotEmpty())
-                                        @php $latestTransaction = $animal->transactions->sortByDesc('created_at')->first(); @endphp
-                                        @if($latestTransaction->vet)
-                                            <div class="font-medium">
-                                                <a href="{{ route('rec.veterinarian.profile', $latestTransaction->vet->user_id) }}" class="text-indigo-500 hover:text-indigo-600">
-                                                    {{ $latestTransaction->vet->complete_name }}
-                                                </a>
-                                            </div>
-                                            <div class="text-slate-500 text-xs">{{ $latestTransaction->vet->contact_no }}</div>
-                                        @else
-                                            <div class="text-slate-500 text-xs">No veterinarian assigned</div>
-                                        @endif
-                                    @else
-                                        <div class="text-slate-500 text-xs">No transactions</div>
-                                    @endif
-                                </td>
-                                <td class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                                    @if($animal->transactions->isNotEmpty())
-                                        <div class="text-left font-medium text-slate-800">{{ $latestTransaction->transactionSubtype->subtype_name ?? 'N/A' }}</div>
-                                        <div class="text-slate-500 text-xs">Status: {{ ['Pending', 'Completed', 'Canceled'][$latestTransaction->status] ?? 'Unknown' }}</div>
-                                    @else
-                                        <div class="text-slate-500 text-xs">No transactions</div>
-                                    @endif
-                                </td>
-                                <td class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                                    @if($animal->is_vaccinated == 1)
-                                        <div class="inline-flex font-medium rounded-full text-center px-2.5 py-0.5 bg-emerald-100 text-emerald-600">Vaccinated</div>
-                                    @elseif($animal->is_vaccinated == 2)
-                                        <div class="inline-flex font-medium rounded-full text-center px-2.5 py-0.5 bg-slate-100 text-slate-600">Not Required</div>
-                                    @else
-                                        <div class="inline-flex font-medium rounded-full text-center px-2.5 py-0.5 bg-rose-100 text-rose-600">Not Vaccinated</div>
-                                    @endif
-                                </td>
-                                <td class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                                    <div class="text-slate-500">{{ $animal->created_at->format('M d, Y') }}</div>
-                                    <div class="text-slate-500 text-xs">{{ $animal->created_at->format('h:i A') }}</div>
-                                </td>
-                                <td class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap w-px">
-                                    <a href="{{ route('rec-animals.edit', ['animal_id' => $animal->animal_id]) }}" class="text-indigo-500 hover:text-indigo-600 rounded-full">
-                                        <span class="sr-only">Edit</span>
-                                        <svg class="w-8 h-8 fill-current" viewBox="0 0 32 32">
-                                            <path d="M19.7 8.3c-.4-.4-1-.4-1.4 0l-10 10c-.2.2-.3.4-.3.7v4c0 .6.4 1 1 1h4c.3 0 .5-.1.7-.3l10-10c.4-.4.4-1 0-1.4l-4-4zM12.6 22H10v-2.6l6-6 2.6 2.6-6 6zm7.4-7.4L17.4 12l1.6-1.6 2.6 2.6-1.6 1.6z"/>
-                                        </svg>
-                                    </a>
-                                </td>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Animal Details
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Owner Information
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Medical History
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Status
+                                </th>
+                                <th scope="col" class="relative px-6 py-3">
+                                    <span class="sr-only">Actions</span>
+                                </th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @foreach($animals as $animal)
+                                <tr class="hover:bg-gray-50 transition-colors duration-150 ease-in-out">
+                                    <!-- Animal Details -->
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center space-x-4">
+                                            <img class="h-10 w-10 rounded-full object-cover" 
+                                                 src="{{ asset($animal->photo_front ? 'storage/' . $animal->photo_front : 'assets/default-avatar.png') }}" 
+                                                 alt="">
+                                            <div>
+                                                <a href="{{ route('rec.profile', ['animal_id' => $animal->animal_id]) }}" 
+                                                   class="font-medium text-green-600 hover:text-green-900 hover:underline">{{ $animal->name }}</a>
+                                                <div class="text-sm text-gray-500">{{ $animal->species->name ?? 'N/A' }} • {{ $animal->breed->name ?? 'N/A' }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
 
-        <!-- Pagination -->
-        <div class="mt-8">
-            {{ $animals->links() }}
+                                    <!-- Owner Information -->
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm">
+                                            <a href="{{ route('rec.profile', ['animal_id' => $animal->animal_id]) }}" 
+                                               class="font-medium text-indigo-600 hover:text-indigo-900 hover:underline">{{ $animal->owner->user->complete_name }}</a>
+                                            <div class="text-gray-500">{{ $animal->owner->user->contact_no }}</div>
+                                        </div>
+                                    </td>
+
+                                    <!-- Medical History -->
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm">
+                                            @if($animal->transactions->isNotEmpty())
+                                                @php $latestTransaction = $animal->transactions->sortByDesc('created_at')->first(); @endphp
+                                                <div class="font-medium text-gray-900">
+                                                    {{ $latestTransaction->transactionSubtype->subtype_name ?? 'N/A' }}
+                                                </div>
+                                                <div class="text-gray-500">
+                                                    @if($latestTransaction->vet)
+                                                        <a href="{{ route('rec.veterinarian.profile', $latestTransaction->vet->user_id) }}" 
+                                                           class="font-medium text-indigo-600 hover:text-indigo-900 hover:underline">
+                                                            Dr. {{ $latestTransaction->vet->complete_name }}
+                                                        </a>
+                                                    @else
+                                                        <span class="text-gray-500">No veterinarian assigned</span>
+                                                    @endif
+                                                </div>
+                                            @else
+                                                <span class="text-gray-500">No medical records</span>
+                                            @endif
+                                        </div>
+                                    </td>
+
+                                    <!-- Status/Vaccination Column -->
+                                    <td class="px-6 py-4">
+                                        <div class="space-y-2">
+                                            <!-- Vaccination Status Badge -->
+                                            @if($animal->is_vaccinated == 1)
+                                                <div class="flex items-center">
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                                        </svg>
+                                                        Vaccinated
+                                                    </span>
+                                                </div>
+                                                <!-- Latest Transaction Info -->
+                                                @if($animal->transactions->isNotEmpty())
+                                                    @php
+                                                        $latestVaccinationTransaction = $animal->transactions
+                                                            ->where('transaction_subtype_id', 8) // Assuming 8 is vaccination transaction type
+                                                            ->sortByDesc('created_at')
+                                                            ->first();
+                                                    @endphp
+                                                    @if($latestVaccinationTransaction)
+                                                        <div class="text-xs text-gray-500">
+                                                            <div class="flex flex-col">
+                                                                <span>Last Updated: {{ $latestVaccinationTransaction->created_at->format('M d, Y') }}</span>
+                                                                @if($latestVaccinationTransaction->next_visit_date)
+                                                                    <span>Next Due: {{ $latestVaccinationTransaction->next_visit_date->format('M d, Y') }}</span>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    @endif
+                                                @endif
+                                            @elseif($animal->is_vaccinated == 2)
+                                                <div class="flex items-center">
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                                        </svg>
+                                                        Not Required
+                                                    </span>
+                                                </div>
+                                                <div class="text-xs text-gray-500">
+                                                    <span>Vaccination not needed</span>
+                                                </div>
+                                            @else
+                                                <div class="flex items-center">
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                                        </svg>
+                                                        Not Vaccinated
+                                                    </span>
+                                                </div>
+                                                <div class="text-xs text-gray-500">
+                                                    <span>No vaccination records</span>
+                                                </div>
+                                            @endif
+
+                                            <!-- Vaccination Alert -->
+                                            @if($animal->transactions->isNotEmpty())
+                                                @php
+                                                    $latestVaccinationTransaction = $animal->transactions
+                                                        ->where('transaction_subtype_id', 8)
+                                                        ->sortByDesc('created_at')
+                                                        ->first();
+                                                @endphp
+                                                @if($latestVaccinationTransaction && $latestVaccinationTransaction->next_visit_date)
+                                                    @if($latestVaccinationTransaction->next_visit_date->isPast())
+                                                        <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                                            </svg>
+                                                            Vaccination Overdue
+                                                        </div>
+                                                    @elseif($latestVaccinationTransaction->next_visit_date->diffInDays(now()) <= 30)
+                                                        <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                                            </svg>
+                                                            Due Soon
+                                                        </div>
+                                                    @endif
+                                                @endif
+                                            @endif
+                                        </div>
+                                    </td>
+
+                                    <!-- Actions -->
+                                    <td class="px-6 py-4 text-right text-sm font-medium">
+                                        <a href="{{ route('rec-animals.edit', ['animal_id' => $animal->animal_id]) }}" 
+                                           class="text-gray-600 hover:text-gray-900">Edit</a>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="mt-4">
+                {{ $animals->links() }}
+            </div>
         </div>
     </div>
 </x-app-layout>

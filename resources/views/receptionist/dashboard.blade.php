@@ -148,7 +148,7 @@
                 <!-- Right Column: Recent Activities -->
                 <div class="lg:col-span-2">
                     <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-                        <div class="px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 flex justify-between items-center">
+                        <div class="px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 flex justify-between items-center">
                             <h2 class="text-white font-medium">Recent Activities</h2>
                             
                             <!-- Date Filter Dropdown - Fixed with vanilla JS -->
@@ -196,7 +196,7 @@
                                                 </button>
                                                 <button 
                                                     type="submit" 
-                                                    class="text-xs bg-purple-600 text-white px-3 py-1 rounded-md hover:bg-purple-700">
+                                                    class="text-xs bg-green-600 text-white px-3 py-1 rounded-md hover:bg-green-700">
                                                     Apply Filter
                                                 </button>
                                             </div>
@@ -216,7 +216,7 @@
                                     @forelse ($recent_activities as $activity)
                                         <div class="relative">
                                             <!-- Timeline Dot -->
-                                            <div class="absolute -left-8 mt-1.5 w-4 h-4 rounded-full bg-purple-500 border-2 border-white"></div>
+                                            <div class="absolute -left-8 mt-1.5 w-4 h-4 rounded-full bg-green-500 border-2 border-white"></div>
                                             
                                             <div class="bg-gray-50 rounded-lg p-3 hover:bg-white hover:shadow-sm transition-all">
                                                 <div class="flex justify-between items-start">
