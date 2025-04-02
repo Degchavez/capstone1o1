@@ -262,9 +262,10 @@
                                                                 </span>
                                                         @endswitch
                                                     </div>
+                                                    @else
+                                                    <span class="text-gray-500">No filters applied</span>
                                                 @endif
-                                            @else
-                                                <span class="text-gray-500">No filters applied</span>
+                                           
                                             @endif
                                         </div>
                                     </td>
