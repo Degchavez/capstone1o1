@@ -137,7 +137,7 @@ new class extends Component
                         </x-nav-link>
                         <x-nav-link :href="route('reports.index')"
                             :active="request()->routeIs('reports.index')"
-                            class="px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 hover:bg-green-50 hover:text-green-600" wire:navigate>
+                            class="px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 hover:bg-green-50 hover:text-green-600">
                             {{ __('Generate Report') }}
                         </x-nav-link>
                     @endif

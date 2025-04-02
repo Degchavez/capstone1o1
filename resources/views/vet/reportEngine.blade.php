@@ -311,7 +311,8 @@
 </x-app-layout>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+// Wrap the entire script in a function that can be called both on initial load and navigation
+function initializeReportEngine() {
     // Get all form elements
     const dateFrom = document.querySelector('input[name="date_from"]');
     const dateTo = document.querySelector('input[name="date_to"]');
@@ -470,16 +471,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add event listeners
     [dateFrom, dateTo, typeSelect, subtypeSelect, statusSelect].forEach(element => {
-        element.addEventListener('change', debouncedUpdate);
-        // Also add input event for date fields to catch manual input
-        if (element.type === 'date') {
-            element.addEventListener('input', debouncedUpdate);
+        if (element) { // Add null check to prevent errors
+            element.addEventListener('change', debouncedUpdate);
+            // Also add input event for date fields to catch manual input
+            if (element.type === 'date') {
+                element.addEventListener('input', debouncedUpdate);
+            }
         }
     });
 
     // Initial preview update if form has pre-filled values
-    if (dateFrom.value && dateTo.value) {
+    if (dateFrom && dateTo && dateFrom.value && dateTo.value) {
         updatePreview();
     }
-});
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', initializeReportEngine);
+
+// Listen for turbo:load or similar navigation events if you're using Turbo/Hotwire
+document.addEventListener('turbo:load', initializeReportEngine);
+
+// For SPAs or other frameworks, add a custom event listener
+document.addEventListener('app:navigation-complete', initializeReportEngine);
+
+// For Laravel Livewire
+if (window.Livewire) {
+    document.addEventListener('livewire:load', initializeReportEngine);
+}
 </script>

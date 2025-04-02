@@ -52,7 +52,16 @@
         </div>
 
         <div class="bg-white shadow-md rounded-lg p-6">
-            <h2 class="text-xl font-bold text-gray-800 mb-6">Reports & Analytics</h2>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Reports & Analytics</h2>
+                <a href="{{ route('reports.index') }}" 
+                   class="inline-flex items-center px-4 py-2 bg-primary text-black font-semibold rounded-lg shadow-md transition-all duration-200 ease-in-out hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Generate Report
+                </a>
+            </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg shadow-sm flex items-center justify-between hover:shadow-md transition duration-300">
                     <div>
