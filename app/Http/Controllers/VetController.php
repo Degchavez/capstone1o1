@@ -300,20 +300,31 @@ public function deleteImage($id)
         return back()->with('status', 'Password updated successfully!');
     }
 
-    public function updateStatus(Request $request, $transaction_id)
+   
+public function updateStatus(Request $request, $transaction_id)
 {
     // Find the transaction by its custom primary key 'transaction_id'
     $transaction = Transaction::where('transaction_id', $transaction_id)->first();
     
-    // If the transaction exists, update the status
+    // If the transaction exists, proceed
     if ($transaction) {
-        $transaction->status = $request->status; // Update the status with the selected value
-        // Update the transaction by explicitly targeting 'transaction_id' as the key
-        Transaction::where('transaction_id', $transaction_id)->update(['status' => $request->status]); // Using the update method to target the 'transaction_id' column
+        // Update the status of the transaction
+        Transaction::where('transaction_id', $transaction_id)->update(['status' => $request->status]);
+
+        // Check if the transaction_subtype_id is 8 (vaccination) and the status is 1 (completed)
+        if ($transaction->transaction_subtype_id == 8 && $request->status == 1) {
+            // Find the related animal using the animal_id from the transaction
+            $animal = Animal::where('animal_id', $transaction->animal_id)->first();
+
+            // Update the is_vaccinated field in the animals table
+            if ($animal) {
+                Animal::where('animal_id', $transaction->animal_id)->update(['is_vaccinated' => 1]);
+            }
+        }
     }
 
     // Redirect back with a success message
-    return back()->with('status', 'Transaction status updated successfully!');
+    return back()->with('message', 'Transaction status updated successfully!');
 }
 
 public function showProfile(Request $request, $owner_id)
