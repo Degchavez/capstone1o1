@@ -136,6 +136,7 @@ public function getTransactionData($transactionId)
         'details' => $transaction->details,
     ]);
 }
+
 public function updateStatus(Request $request, $transaction_id)
 {
     // Find the transaction by its custom primary key 'transaction_id'

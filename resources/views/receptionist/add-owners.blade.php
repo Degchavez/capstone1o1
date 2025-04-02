@@ -101,22 +101,30 @@
         </select>
     </div>
 
-    <!-- Category -->
-    <div>
-        <x-input-label for="category" :value="__('Category')" class="text-lg font-semibold text-gray-800"/>
-        <select name="category" id="category" class="mt-1 block w-full rounded-lg border-green-600 shadow-sm focus:ring-2 focus:ring-green-500">
-            <option value="">Select Category</option>
-
-            <option value="N/A" {{ old('category') == 'N/A' ? 'selected' : '' }}>N/A</option>
-            <option value="Indigenous People" {{ old('category') == 'Indigenous People' ? 'selected' : '' }}>Indigenous People</option>
-            <option value="Senior" {{ old('category') == 'Senior' ? 'selected' : '' }}>Senior</option>
-            <option value="Single Parent" {{ old('category') == 'Single Parent' ? 'selected' : '' }}>Single Parent</option>
-            <option value="Pregnant" {{ old('category') == 'Pregnant' ? 'selected' : '' }}>Pregnant</option>
-            <option value="Person with Disability" {{ old('category') == 'Person with Disability' ? 'selected' : '' }}>Person with Disability</option>
-            <option value="Lactating Mother" {{ old('category') == 'Lactating Mother' ? 'selected' : '' }}>Lactating Mother</option>
-            <option value="LGBT" {{ old('category') == 'LGBT' ? 'selected' : '' }}>LGBT</option>
-        </select>
+<!-- Category -->
+<div>
+    <x-input-label for="category" :value="__('Categories')" class="text-lg font-semibold text-gray-800" />
+    <div class="grid grid-cols-2 gap-4 mt-2">
+        @foreach($categories as $category)
+            <div class="flex items-center p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                <input 
+                    type="checkbox" 
+                    id="category_{{ $category->id }}" 
+                    name="selectedCategories[]" 
+                    value="{{ $category->id }}" 
+                    class="w-5 h-5 text-blue-600 mr-3"
+                    {{ in_array($category->id, old('selectedCategories', [])) ? 'checked' : '' }}
+                />
+                <label for="category_{{ $category->id }}" class="text-gray-800 font-medium">{{ $category->name }}</label>
+            </div>
+        @endforeach
     </div>
+    @if($errors->has('selectedCategories'))
+        <p class="mt-1 text-sm text-red-600">{{ $errors->first('selectedCategories') }}</p>
+    @endif
+</div>
+
+
 </div>
 
                 <!-- Submit Button -->

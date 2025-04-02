@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth; // Add this at the top of your controller
 use Illuminate\Support\Facades\Hash; // Add this at the top of your controller
 
 
+
 use App\Models\Transaction; // Import the Species model
 use App\Models\TransactionSubtype; // Import the model
 use App\Models\Animal; // Import the Species model
@@ -26,6 +27,10 @@ use App\Models\Barangay;
 use App\Models\City;
 use App\Models\User;
 use DB; 
+use App\Models\Category;
+use Illuminate\Support\Facades\Log;
+
+
 
 use Illuminate\Http\Request;
 
@@ -36,92 +41,94 @@ class ReController extends Controller
    {
        // Capture filters from the request
        $search = $request->input('search', '');
-       $gender = $request->input('gender', ''); // Filter by gender
-       $category = $request->input('category', ''); // Filter by category
-       $civil_status = $request->input('civil_status', ''); // Filter by civil status
-       $barangay_id = $request->input('barangay', ''); // Filter by barangay
+       $gender = $request->input('gender', '');
+       $category = $request->input('category', '');
+       $civil_status = $request->input('civil_status', '');
+       $barangay_id = $request->input('barangay', '');
+       $fromDate = $request->input('fromDate');
+       $toDate = $request->input('toDate');
    
        // Fetch barangays for the dropdown
        $barangays = Barangay::select('id', 'barangay_name')->orderBy('barangay_name')->get();
    
-       // Fetch owners with necessary relationships and filters
-       $owners = Owner::with([
+       // Fetch categories for the dropdown
+       $categories = Category::select('id', 'name')->orderBy('name')->get();
+   
+       // Build the query
+       $query = Owner::with([
                'user',
-               'animals.species', // Load species for animals
-               'animals.breed',   // Load breed for animals
-               'transactions',    // Load transactions
-               'address.barangay' // Load address with barangay
+               'animals.species',
+               'animals.breed',
+               'transactions',
+               'address.barangay'
            ])
            ->join('users', 'owners.user_id', '=', 'users.user_id')
            ->leftJoin('addresses', 'users.user_id', '=', 'addresses.user_id')
            ->leftJoin('barangays', 'addresses.barangay_id', '=', 'barangays.id')
            ->leftJoin('transactions', 'owners.owner_id', '=', 'transactions.owner_id')
            ->leftJoin('transaction_types', 'transactions.transaction_type_id', '=', 'transaction_types.id')
+           ->leftJoin('category_user', 'users.user_id', '=', 'category_user.user_id')
+           ->leftJoin('categories', 'category_user.category_id', '=', 'categories.id')
+           ->where('users.role', 1);
    
-           // Filter: role must be 'Owner' (role = 1)
-           ->where('users.role', 1)
+       // Apply search filter
+       if ($search) {
+           $query->where(function ($q) use ($search) {
+               $q->where('users.complete_name', 'like', '%' . $search . '%')
+                 ->orWhere('users.contact_no', 'like', '%' . $search . '%')
+                 ->orWhere('addresses.street', 'like', '%' . $search . '%')
+                 ->orWhere('barangays.barangay_name', 'like', '%' . $search . '%');
+           });
+       }
    
-           // Apply search filter
-           ->where(function ($query) use ($search) {
-               $query->where('users.complete_name', 'like', '%' . $search . '%')
-                     ->orWhere('users.contact_no', 'like', '%' . $search . '%')
-                     ->orWhere('addresses.street', 'like', '%' . $search . '%')
-                     ->orWhere('barangays.barangay_name', 'like', '%' . $search . '%');
-           })
+       // Apply category filter
+       if ($category !== '' && $category !== null) {
+           $query->whereExists(function ($q) use ($category) {
+               $q->select(DB::raw(1))
+                 ->from('category_user')
+                 ->whereColumn('category_user.user_id', 'users.user_id')
+                 ->where('category_user.category_id', $category);
+           });
+       }
    
-          // Apply gender filter
-->when($gender, function ($query) use ($gender) {
-    return $query->where('users.gender', $gender);
-})
-
-// Apply category filter
-->when($category, function ($query) use ($category) {
-    return $query->where('owners.category', $category);
-})
-
-// Apply civil status filter
-->when($civil_status, function ($query) use ($civil_status) {
-    return $query->where('owners.civil_status', $civil_status);
-})
-
-// Apply barangay filter
-->when($barangay_id, function ($query) use ($barangay_id) {
-    return $query->where('barangays.id', $barangay_id);
-})
-
-// Apply date range filter
-->when(request('fromDate'), function ($query) {
-    return $query->whereDate('owners.created_at', '>=', request('fromDate'));
-})
-->when(request('toDate'), function ($query) {
-    return $query->whereDate('owners.created_at', '<=', request('toDate'));
-})
-
+       // Apply other filters
+       if ($gender) {
+           $query->where('users.gender', $gender);
+       }
+       if ($civil_status) {
+           $query->where('owners.civil_status', $civil_status);
+       }
+       if ($barangay_id) {
+           $query->where('barangays.id', $barangay_id);
+       }
+       if ($fromDate) {
+           $query->whereDate('owners.created_at', '>=', $fromDate);
+       }
+       if ($toDate) {
+           $query->whereDate('owners.created_at', '<=', $toDate);
+       }
    
-           // Select necessary fields
-           ->select(
+       // Select and group the results
+       $owners = $query->select([
                'owners.owner_id', 
                'owners.civil_status',
-               'owners.category',
                'owners.created_at',
                'users.complete_name',
                'users.profile_image',
                'users.contact_no',
                'users.gender',
                'users.birth_date',
-               'users.user_id as user_id',
+               'users.user_id',
                'addresses.street',
                'barangays.barangay_name',
+               DB::raw('COALESCE(GROUP_CONCAT(DISTINCT categories.name SEPARATOR ", "), "No Categories") as categories'),
                DB::raw('GROUP_CONCAT(transactions.transaction_type_id) as transaction_type_ids'),
                DB::raw('GROUP_CONCAT(transaction_types.type_name) as transaction_types'),
                DB::raw('MAX(transactions.created_at) as transaction_created_at')
-           )
-   
-           // Group by owner attributes
-           ->groupBy(
+           ])
+           ->groupBy([
                'owners.owner_id',
                'owners.civil_status',
-               'owners.category',
                'owners.created_at',
                'users.complete_name',
                'users.profile_image',
@@ -131,16 +138,20 @@ class ReController extends Controller
                'users.user_id',
                'addresses.street',
                'barangays.barangay_name'
-           )
-   
-           // Order by creation date
+           ])
            ->orderBy('users.created_at', 'desc')
-   
-           // Pagination: 25 items per page
            ->paginate(15);
    
-       // Return to the view with compact variables
-       return view('receptionist.animal-owners', compact('owners', 'search', 'gender', 'category', 'civil_status', 'barangays', 'barangay_id'));
+       return view('receptionist.animal-owners', compact(
+           'owners',
+           'search',
+           'gender',
+           'category',
+           'categories',
+           'civil_status',
+           'barangays',
+           'barangay_id'
+       ));
    }
    
    public function loadAnimalsList(Request $request)
@@ -201,8 +212,9 @@ class ReController extends Controller
 
 public function showRegistrationForm()
 {
+    $categories = Category::all();
     $barangays = Barangay::all(); // Get all barangays for selection
-    return view('receptionist.add-owners', compact('barangays'));
+    return view('receptionist.add-owners', compact('barangays', 'categories'));
 }
 
 /**
@@ -210,55 +222,82 @@ public function showRegistrationForm()
  */
 public function register(Request $request)
 {
-    // Validate incoming request
-    $request->validate([
-        'complete_name' => 'required|string|max:255',
-        'contact_no' => 'required|string|max:15',
-        'gender' => 'required|string|max:10',
-        'birth_date' => ['nullable', 'date', 'before_or_equal:today'],
-        'email' => 'required|email|unique:users,email',
-        'barangay_id' => 'required|integer|exists:barangays,id',
-        'street' => 'required|string|max:255',
-        'civil_status' => 'required|string|max:20',
-        'category' => 'nullable|string|max:100',
-        'permit' => 'nullable|string|max:255',
-    ]);
+    try {
+        DB::beginTransaction();
+        
+        // Validate incoming request
+        $request->validate([
+            'complete_name' => 'required|string|max:255',
+            'contact_no' => 'required|string|max:15',
+            'gender' => 'required|string|max:10',
+            'birth_date' => ['nullable', 'date', 'before_or_equal:today'],
+            'email' => 'required|email|unique:users,email',
+            'barangay_id' => 'required|integer|exists:barangays,id',
+            'street' => 'required|string|max:255',
+            'civil_status' => 'required|string|max:20',
+            'selectedCategories' => 'nullable|array',
+            'selectedCategories.*' => 'exists:categories,id',
+            'permit' => 'nullable|string|max:255',
+        ]);
 
-    // Generate a random password
-    $randomPassword = Str::random(8);
+        // Generate a random password
+        $randomPassword = Str::random(8);
 
-    // Create the user
-    $user = new User();
-    $user->complete_name = $request->complete_name;
-    $user->contact_no = $request->contact_no;
-    $user->gender = $request->gender;
-    $user->birth_date = $request->birth_date;
-    $user->status = 1;
-    $user->email = $request->email;
-    $user->role = 1;  // Assuming '1' is for owner
-    $user->password = bcrypt($randomPassword);  // Use the random password
-    $user->save();
+        // Create the user
+        $user = new User();
+        $user->complete_name = $request->complete_name;
+        $user->contact_no = $request->contact_no;
+        $user->gender = $request->gender;
+        $user->birth_date = $request->birth_date;
+        $user->status = 1;
+        $user->email = $request->email;
+        $user->role = 1;  // Assuming '1' is for owner
+        $user->password = bcrypt($randomPassword);  // Use the random password
+        $user->save();
 
-    // Register the address linked to the user
-    $address = new Address();
-    $address->user_id = $user->user_id;
-    $address->barangay_id = $request->barangay_id;
-    $address->street = $request->street;
-    $address->save();
+        // Register the address linked to the user
+        $address = new Address();
+        $address->user_id = $user->user_id;
+        $address->barangay_id = $request->barangay_id;
+        $address->street = $request->street;
+        $address->save();
 
-    // Create the owner record linked to the user
-    $owner = new Owner();
-    $owner->user_id = $user->user_id;
-    $owner->civil_status = $request->civil_status;
-    $owner->category = $request->category;
-    $owner->permit = 1; 
-    $owner->save();
+        // Create the owner record linked to the user
+        $owner = new Owner();
+        $owner->user_id = $user->user_id;
+        $owner->civil_status = $request->civil_status;
+        $owner->permit = 1; 
+        $owner->created_by = Auth::id(); // Store the currently logged-in user's ID
+        $owner->save();
 
-    // Send the password to the user's email
-    Mail::to($request->email)->send(new WelcomeEmail($user, $randomPassword));
+        // Attach categories if provided
+        if ($request->has('selectedCategories') && is_array($request->selectedCategories)) {
+            // Make sure each category ID is valid
+            $validCategoryIds = [];
+            foreach ($request->selectedCategories as $categoryId) {
+                if (is_numeric($categoryId)) {
+                    $validCategoryIds[] = (int)$categoryId;
+                }
+            }
+            
+            if (!empty($validCategoryIds)) {
+                $user->categories()->attach($validCategoryIds);
+            }
+        }
 
-    // Redirect with a success message
-    return redirect()->route('rec-owners')->with('success', 'User and owner registered successfully, and password has been emailed!');
+        // Send the password to the user's email
+        Mail::to($request->email)->send(new WelcomeEmail($user, $randomPassword));
+
+        DB::commit();
+
+        // Redirect with a success message
+        return redirect()->route('rec-owners')->with('success', 'User and owner registered successfully, and password has been emailed!');
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return back()
+            ->withInput()
+            ->with('error', 'Failed to register owner: ' . $e->getMessage());
+    }
 }
 
 
@@ -273,78 +312,112 @@ public function ownerList_edit($owner_id)
     // Fetch all barangays for the dropdown list
     $barangays = Barangay::all();
 
+    $categories = Category::all();
+
     // Pass the data to the view
-    return view('receptionist.ownerlist-edit', compact('user', 'barangays', 'owner'));
+    return view('receptionist.ownerlist-edit', compact('user', 'barangays', 'owner','categories'));
 }
 
 
 
 public function ownerList_update(Request $request, $owner_id)
 {
-    // Validation
-    $request->validate([
-        'complete_name' => 'required|string|max:100',
-        'contact_no' => 'required|string|max:15',
-        'gender' => 'required|string|max:10',
-        'birth_date' => ['nullable', 'date', 'before_or_equal:today'], // Ensure birthdate is not in the future
-        'status' => 'required|integer',
-        'email' => 'required|email|max:100|unique:users,email,' . $owner_id . ',user_id',
-        'barangay_id' => 'required|exists:barangays,id',
-        'street' => 'nullable|string|max:255',
-        'profile_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048', // Validate image upload
-        'civil_status' => 'nullable|string|max:50', // Additional fields
-        'category' => 'nullable|string|max:50',
-    ]);
+    try {
+        // Log the incoming request data for debugging
+        Log::info('Owner update request data:', $request->all());
+        
+        // Validation
+        $validated = $request->validate([
+            'complete_name' => 'required|string|max:100',
+            'contact_no' => 'required|string|max:15',
+            'gender' => 'required|string|max:10',
+            'birth_date' => ['nullable', 'date'],
+            'status' => 'required|integer',
+            'email' => 'required|email|max:100|unique:users,email,' . $owner_id . ',user_id',
+            'barangay_id' => 'required|exists:barangays,id',
+            'street' => 'nullable|string|max:255',
+            'profile_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'civil_status' => 'nullable|string|max:50',
+            'selectedCategories' => 'nullable|array',
+            'selectedCategories.*' => 'exists:categories,id'
+        ]);
 
-    // Find the user by user_id
-    $user = User::findOrFail($owner_id);
+        DB::beginTransaction();
 
-    // Find the owner record associated with the user
-    $owner = Owner::where('user_id', $user->user_id)->firstOrFail();
+        // Find the user
+        $user = User::findOrFail($owner_id);
 
-    // Handle profile image upload
-    if ($request->hasFile('profile_image')) {
-        // Delete old image if it exists
-        if ($user->profile_image) {
-            Storage::disk('public')->delete($user->profile_image);
+        // Update user
+        $user->update([
+            'complete_name' => $validated['complete_name'],
+            'contact_no' => $validated['contact_no'],
+            'gender' => $validated['gender'],
+            'birth_date' => $validated['birth_date'],
+            'status' => $validated['status'],
+            'email' => $validated['email'],
+            'role' => 1,
+        ]);
+
+        // Update address
+        $user->address()->updateOrCreate(
+            ['user_id' => $user->user_id],
+            [
+                'barangay_id' => $validated['barangay_id'],
+                'street' => $validated['street'] ?? '',
+            ]
+        );
+
+        // Update owner
+        $owner = $user->owner()->updateOrCreate(
+            ['user_id' => $user->user_id],
+            [
+                'civil_status' => $validated['civil_status'] ?? '',
+                'permit' => 1,
+            ]
+        );
+
+        // Update categories
+        if (isset($validated['selectedCategories'])) {
+            // Convert all values to integers and filter out invalid ones
+            $categories = [];
+            foreach ($validated['selectedCategories'] as $categoryId) {
+                // Include the category if it's a valid number (including 0)
+                if (is_numeric($categoryId) || $categoryId === '0') {
+                    $categories[] = (int)$categoryId;
+                }
+            }
+            
+            // Log the categories being processed
+            Log::info('Categories being synced:', $categories);
+            
+            // Sync the categories
+            $user->categories()->sync($categories);
+        } else {
+            // If no categories selected, detach all
+            $user->categories()->detach();
         }
 
-        // Store the new image and update the path
-        $user->profile_image = $request->file('profile_image')->store('profile_images', 'public');
+        // Verify that categories were updated correctly
+        $updatedCategories = $user->categories()->pluck('categories.id')->toArray();
+        Log::info('Updated categories for user ' . $user->user_id, [
+            'updated_categories' => $updatedCategories
+        ]);
+
+        DB::commit();
+        
+        return redirect()->route('rec-owners')->with('success', 'Profile updated successfully.');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Error updating owner: ' . $e->getMessage(), [
+            'user_id' => $owner_id,
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        return redirect()->back()
+            ->withInput()
+            ->withErrors(['error' => 'An error occurred while updating the profile: ' . $e->getMessage()]);
     }
-
-    // Update the user record
-    $user->update([
-        'complete_name' => $request->complete_name,
-        'contact_no' => $request->contact_no,
-        'gender' => $request->gender,
-        'birth_date' => $request->birth_date,
-        'status' => $request->status,
-        'email' => $request->email,
-        'role' => 1, // Explicitly set the role
-    ]);
-
-    // Update or create the user's address
-    $user->address()->updateOrCreate(
-        ['user_id' => $user->user_id], // Match by user_id
-        [
-            'barangay_id' => $request->barangay_id,
-            'street' => $request->street,
-        ]
-    );
-
-    // Update or create the owner data
-    $user->owner()->updateOrCreate(
-        ['user_id' => $user->user_id], // Match by user_id
-        [
-            'civil_status' => $request->civil_status,
-            'category' => $request->category,
-            'permit' => 1, // Set permit to 1 explicitly
-        ]
-    );
-
-    // Redirect back with success message
-    return redirect()->route('rec-owners')->with('message', 'Profile updated successfully.');
 }
 
 
@@ -531,6 +604,8 @@ public function owner_update(Request $request, $id)
     ->with('message', 'Profile updated successfully.');
 
 }
+
+
 
 public function showAddAnimalForm($owner_id)
    {
@@ -1254,8 +1329,8 @@ public function showAnimalProfile(Request $request, $animal_id)
     ->firstOrFail(); // Ensure it exists or return a 404 error
 
     // Fetch additional data for transaction forms (if needed for dropdowns, etc.)
-    $transactionTypes = TransactionType::all(); // Get all transaction types
-    $transactionSubtypes = TransactionSubtype::all(); // Get all transaction subtypes
+    $transactionTypes = TransactionType::all();
+    $transactionSubtypes = TransactionSubtype::all();
     $vets = User::where('role', 2)->get(); // Get all veterinarians (role 2 = Veterinarian)
     
     // Fetch vaccines and technicians
@@ -1374,9 +1449,6 @@ public function recedit($id)
   
       // Retrieve all veterinary technicians (model set up correctly)
       $technicians = VeterinaryTechnician::all();
-  
-      // Retrieve all vaccines
-      $vaccines = Vaccine::all();
   
       // Retrieve all transaction subtypes
       $transactionSubtypes = TransactionSubtype::all();

@@ -506,6 +506,7 @@ class UserController extends Controller
                 ->withErrors(['error' => 'An error occurred while updating the profile: ' . $e->getMessage()]);
         }
     }
+    
     public function create_vet()
     {
         $designations = Designation::all(); // Get all designations

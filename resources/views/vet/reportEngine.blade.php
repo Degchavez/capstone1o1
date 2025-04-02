@@ -30,10 +30,10 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Transaction Type</label>
+                        <label class="block text-sm font-medium text-gray-700">Transaction</label>
                         <select name="transaction_type_id" id="transaction_type_id"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            <option value="">All Types</option>
+                            <option value="">All Transaction</option>
                             @foreach($transactionTypes as $type)
                                 <option value="{{ $type->id }}" data-subtypes="{{ $type->subtypes }}">
                                     {{ $type->type_name }}
@@ -43,10 +43,10 @@
                     </div>
 
                     <div id="subtype_container" style="display: none;">
-                        <label class="block text-sm font-medium text-gray-700">Transaction Subtype</label>
+                        <label class="block text-sm font-medium text-gray-700">Transaction Type</label>
                         <select name="transaction_subtype_id" id="transaction_subtype_id"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            <option value="">All Subtypes</option>
+                            <option value="">All Types</option>
                         </select>
                     </div>
 
