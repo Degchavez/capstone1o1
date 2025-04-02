@@ -68,10 +68,7 @@
                                 <input type="radio" name="format" value="pdf" class="form-radio text-blue-600" checked>
                                 <span class="ml-2">PDF</span>
                             </label>
-                            <label class="inline-flex items-center">
-                                <input type="radio" name="format" value="excel" class="form-radio text-blue-600">
-                                <span class="ml-2">Excel</span>
-                            </label>
+                          
                         </div>
                     </div>
 
