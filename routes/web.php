@@ -366,6 +366,33 @@ Route::get('/vet/{animal_id}/animal_profile', [VetController::class, 'showAnimal
 
 Route::group(['middleware' => 'receptionist'], function () {
 
+    // Receptionist Report Routes
+
+    // Report Engine
+    Route::get('/receptionist/reports', [App\Http\Controllers\VetReportController::class, 'index'])
+        ->name('receptionist.reports');
+    
+    // API for report previews
+    Route::post('/api/receptionist/reports/preview', [App\Http\Controllers\VetReportController::class, 'preview'])
+        ->name('receptionist.reports.preview');
+    
+    // Report generation routes
+    Route::post('/receptionist/reports/transactions', [App\Http\Controllers\VetReportController::class, 'generateTransactionReport'])
+        ->name('receptionist.reports.transactions');
+    
+    Route::post('/receptionist/reports/owners', [App\Http\Controllers\VetReportController::class, 'generateOwnerReport'])
+        ->name('receptionist.reports.owners');
+    
+    Route::post('/receptionist/reports/animals', [App\Http\Controllers\VetReportController::class, 'generateAnimalReport'])
+        ->name('receptionist.reports.animals');
+    
+    Route::post('/receptionist/reports/vaccinations', [App\Http\Controllers\ReportController::class, 'generateVaccinationReport'])
+        ->name('receptionist.reports.vaccinations');
+    
+    Route::post('/receptionist/reports/users', [App\Http\Controllers\ReportController::class, 'generateUserReport'])
+        ->name('receptionist.reports.users');
+
+
     Route::get('/rec/owners',[ReController::class,'loadOwnersList'])
     ->name('rec-owners');
 

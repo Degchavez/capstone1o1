@@ -1357,67 +1357,75 @@ public function edit_animal($animal_id)
 
 public function update(Request $request, $animal_id)
 {
-    // Validate the incoming request data
-    $request->validate([
-        'name' => 'required_if:is_group,false|string|max:255', // Required if not a group
+    $validationRules = [
         'species_id' => 'required|exists:species,id',
         'breed_id' => 'required|exists:breeds,id',
-        'birth_date' => 'nullable|date',
-        'gender' => 'required_if:is_group,false|in:male,female', // Required if not a group
-        'medical_condition' => 'nullable|string',
-        'photo_front' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        'photo_back' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        'photo_left_side' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        'photo_right_side' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        'is_group' => 'required|boolean',
-        'group_count' => 'required_if:is_group,true|integer|min:1', // Required if group
-        'color' => 'nullable|string|max:255', // Color validation
+        'birth_date' => ['nullable', 'date', 'before_or_equal:today'], // Ensure birthdate is not in the future
+        'color' => 'nullable|string|max:255', // Add validation for color
+        'medical_condition' => 'nullable|string|max:255',
+        'photo_front' => 'nullable|image|max:2048',
+        'photo_back' => 'nullable|image|max:2048',
+        'photo_left_side' => 'nullable|image|max:2048',
+        'photo_right_side' => 'nullable|image|max:2048',
+        'is_group' => 'required|boolean', // Add validation for is_group
         'is_vaccinated' => 'required|in:0,1,2', // Add validation for is_vaccinated
 
-    ]);
+    ];
+
+    // Apply conditional validation based on 'is_group'
+    if ($request->is_group == 0) {
+        // If it's not a group, name and gender are required
+        $validationRules['name'] = 'required|string|max:255';
+        $validationRules['gender'] = 'required|in:Male,Female';
+        $validationRules['group_count'] = 'nullable'; // Don't require group_count for non-groups
+    } else {
+        // If it's a group, name and gender are not required
+        $validationRules['name'] = 'nullable|string|max:255'; // Allow name to be null
+        $validationRules['gender'] = 'nullable|in:Male,Female'; // Allow gender to be null
+        $validationRules['group_count'] = 'required|integer|min:1'; // Require group_count for groups
+    }
+
+    // Validate the form input
+    $request->validate($validationRules);
 
     // Fetch the existing animal record
     $animal = Animal::where('animal_id', $animal_id)->firstOrFail();
 
-    // Prepare the attributes to be updated
-    $attributes = [
-        'species_id' => $request->species_id,
-        'breed_id' => $request->breed_id,
-        'birth_date' => $request->birth_date,
-        'medical_condition' => $request->medical_condition,
-        'is_group' => $request->is_group,
-        'color' => $request->color,
-        'is_vaccinated' => $request->is_vaccinated,
+    // Prepare the animal data
+    $data = $request->only([
+        'name', 'species_id', 'breed_id', 'birth_date', 'gender', 'medical_condition', 'is_group', 'group_count', 'color', 'is_vaccinated',
+    ]);
 
-    ];
-
-    // Conditional logic for name and group-specific fields
-    if ($request->is_group) {
-        $attributes['name'] = $request->name; // Set default group name
-        $attributes['gender'] = null; // Groups don't have genders
-        $attributes['group_count'] = max($request->group_count, 1); // Ensure group count is at least 1
-    } else {
-        $attributes['name'] = $request->name; // Use the provided name for individuals
-        $attributes['gender'] = $request->gender; // Assign gender for individuals
-        $attributes['group_count'] = null; // Reset group count for individuals
-    }
-
-    // Handle file uploads for photos
+    // Handle photo uploads and update the existing photos
     foreach (['photo_front', 'photo_back', 'photo_left_side', 'photo_right_side'] as $photo) {
         if ($request->hasFile($photo)) {
-            if ($animal->{$photo}) {
-                \Storage::disk('public')->delete($animal->{$photo}); // Delete existing photo
-            }
-            $attributes[$photo] = $request->file($photo)->store('photos', 'public');
+            // Store new photo and update the animal record
+            $data[$photo] = $request->file($photo)->store('animal_photos', 'public');
+        } else {
+            // Retain old photo if not replaced
+            $data[$photo] = $animal->{$photo}; // Retain the old photo if the user doesn't upload a new one
         }
     }
 
-    // Perform the update with the prepared attributes
-    Animal::where('animal_id', $animal_id)->update($attributes);
+    // If it's a group, handle the group-specific logic
+    if ($data['is_group'] == 1) {
+        // Set a default value for name (or empty string) when it's a group
+        $data['name'] = $data['name'] ?? 'Group'; // Use 'Group' or leave it empty
+        $data['gender'] = null; // Groups do not have a gender
+    }
 
-    // Redirect to the animal's profile with a success message
-    return redirect()->route('rec.profile', ['animal_id' => $animal->animal_id])
-        ->with('message', 'Animal updated successfully.');
+    try {
+        // Update the animal record
+        Animal::where('animal_id', $animal_id)->update($data);
+
+        // Redirect with success message
+        return redirect()->route('rec.profile', ['animal_id' => $animal->animal_id])
+        ->with('success', 'Animal updated successfully.');
+
+    } catch (\Exception $e) {
+        // Handle exceptions and return the error message
+        return back()->withErrors(['error' => $e->getMessage()]);
+    }
 }
 
 public function recedit($id)
