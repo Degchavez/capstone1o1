@@ -44,7 +44,7 @@
                     <!-- Left: Form -->
                     <div>
                         <h3 class="text-lg font-medium text-gray-900 mb-4">Transaction Report Settings</h3>
-                        <form id="transactions-form" action="{{ route('receptionist.reports.transactions') }}" method="POST" class="space-y-4">
+                        <form id="transactions-form" action="{{ route('receptionist.view.transactions') }}" method="GET" class="space-y-4">
                             @csrf
                             <input type="hidden" name="preview_type" value="transactions">
                             
@@ -894,7 +894,7 @@ function initializeReportEngine() {
             }
             
             // Make API request
-            const response = await fetch('/api/receptionist/reports/preview', {
+            const response = await fetch('/rec_reports/api/receptionist/reports/preview', {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
@@ -1134,77 +1134,10 @@ function initializeReportEngine() {
         }
     }
 
-    // Update staff preview with data
-    function updateStaffPreview(data, form) {
-        console.log('Updating staff preview with data:', data);
-        
-        // Update filter displays
-        const roleSelect = form.querySelector('select[name="role"]');
-        const designationSelect = form.querySelector('select[name="designation_id"]');
-        
-        // Update role text
-        document.getElementById('staff-preview-role').textContent = 
-            `Role: ${roleSelect.options[roleSelect.selectedIndex].text}`;
-        
-        // Update designation text (only show if applicable)
-        const designationElement = document.getElementById('staff-preview-designation');
-        if (roleSelect.value === '3') {
-            // Hide designation for receptionists
-            designationElement.style.display = 'none';
-        } else {
-            designationElement.style.display = 'block';
-            designationElement.textContent = 
-                `Designation: ${designationSelect.options[designationSelect.selectedIndex].text}`;
-        }
-
-        // Update summary statistics
-        document.getElementById('staff-preview-total').textContent = data.summary?.total || 0;
-        
-        // Update role breakdown
-        const byRoleElement = document.getElementById('staff-preview-by-role');
-        const vetsCount = data.summary?.by_role?.[2] || 0;
-        const recepCount = data.summary?.by_role?.[3] || 0;
-        
-        byRoleElement.innerHTML = `
-            <div>Veterinarians: ${vetsCount}</div>
-            <div>Receptionists: ${recepCount}</div>
-        `;
-
-        // Update sample data table
-        const tableBody = document.getElementById('staff-preview-table-body');
-        if (data.samples && data.samples.length > 0) {
-            tableBody.innerHTML = data.samples.map(staff => `
-                <tr>
-                    <td class="px-3 py-2">${staff.name || 'N/A'}</td>
-                    <td class="px-3 py-2">${getRoleName(staff.role)}</td>
-                    <td class="px-3 py-2">${staff.email || 'N/A'}</td>
-                </tr>
-            `).join('');
-        } else {
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="3" class="px-3 py-2 text-center text-gray-500">
-                        No staff found for selected filters
-                    </td>
-                </tr>
-            `;
-        }
-    }
-
-    // Helper function to convert role number to name
-    function getRoleName(role) {
-        role = parseInt(role);
-        switch(role) {
-            case 2: return 'Veterinarian';
-            case 3: return 'Receptionist';
-            case 0: return 'Admin';
-            case 1: return 'Owner';
-            default: return `Unknown (${role})`;
-        }
-    }
+    
 
     // Date validation and default date setting
-    const forms = ['transactions', 'clients', 'animals', 'vaccinations', 'staff'];
+    const forms = ['transactions', 'clients', 'animals', 'vaccinations'];
     forms.forEach(formType => {
         const form = document.getElementById(`${formType}-form`);
         if (!form) return;

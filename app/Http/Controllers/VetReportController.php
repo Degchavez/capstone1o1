@@ -17,7 +17,9 @@ use App\Models\Vaccine;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Models\TransactionSubtype;
 use PDF;
+
 
 class VetReportController extends Controller
 {
@@ -46,7 +48,91 @@ class VetReportController extends Controller
             'designations'
         ));
     }
+    public function transactionReportView(Request $request)
+    {
+        // Match the form input names!
+        $filters = $request->only([
+            'transaction_type_id', 
+            'transaction_subtype_id', 
+            'status', 
+            'date_from', 
+            'date_to'
+        ]);
+    
+        $transactions = Transaction::with('transactionType', 'transactionSubtype', 'owner', 'animal.species', 'animal.breed')
+            ->whereBetween('created_at', [
+                $filters['date_from'] ?? now()->subYear(), 
+                $filters['date_to'] ?? now()
+            ])
+            ->when(isset($filters['transaction_type_id']), function ($query) use ($filters) {
+                return $query->where('transaction_type_id', $filters['transaction_type_id']);
+            })
+            ->when(isset($filters['transaction_subtype_id']), function ($query) use ($filters) {
+                return $query->where('transaction_subtype_id', $filters['transaction_subtype_id']);
+            })
+            ->when(isset($filters['status']), function ($query) use ($filters) {
+                return $query->where('status', $filters['status']);
+            })
+            ->get();
+        
+        $summary = $this->generateSummaryStatistics($transactions);
+    
+        $pdf = PDF::loadView('reports.pdf.receptionist.transactions', [
+            'veterinarian' => auth()->user(),
+            'dateFrom' => \Carbon\Carbon::parse($filters['date_from']),
+            'dateTo' => \Carbon\Carbon::parse($filters['date_to']),
+            'filters' => $filters,
+            'summary' => $summary,
+            'transactions' => $transactions,
+        ]);
+    
+        return $pdf->download('transaction_report_' . now()->format('Y_m_d_H_i_s') . '.pdf');
+    }
+    
 
+    private function generateSummaryStatistics($transactions)
+    {
+        $summary = [
+            'total' => $transactions->count(),
+            'byStatus' => [
+                0 => 0,  // Pending
+                1 => 0,  // Completed
+                2 => 0,  // Cancelled
+            ],
+            'byType' => [],
+        ];
+    
+        foreach ($transactions as $transaction) {
+            $status = $transaction->status;
+            $typeName = $transaction->transactionType->name ?? 'Unknown';
+    
+            // Count by status using the correct numeric values (0, 1, 2)
+            if (isset($summary['byStatus'][$status])) {
+                $summary['byStatus'][$status]++;
+            }
+    
+            // Count by type
+            if (!isset($summary['byType'][$typeName])) {
+                $summary['byType'][$typeName] = [
+                    'count' => 0,
+                    'completed' => 0,
+                    'pending' => 0,
+                    'cancelled' => 0,
+                ];
+            }
+    
+            $summary['byType'][$typeName]['count']++;
+    
+            // Count status-specific by type
+            if (isset($summary['byType'][$typeName][$status])) {
+                $summary['byType'][$typeName][$status]++;
+            }
+        }
+    
+        return $summary;
+    }
+    
+    
     public function preview(Request $request)
     {
         try {
@@ -137,6 +223,7 @@ class VetReportController extends Controller
             'samples' => $samples
         ]);
     }
+    
 
     private function previewOwners(Request $request)
     {
@@ -361,7 +448,7 @@ class VetReportController extends Controller
         }
     }
 
-    public function generateTransactionReport(Request $request)
+    public function generateRecTransactionReport(Request $request)
     {
         try {
             $validated = $request->validate([
