@@ -157,21 +157,22 @@ class VetReportController extends Controller
             });
         }
 
-        // Clone query for counts
-        $totalQuery = clone $query;
-
-        // Get summary
+        // Execute the query once and store the results
         $ownersData = $query->get();
+        
+        // Create summary data
         $summary = [
-            'total' => $totalQuery->count(),
+            'total' => $ownersData->count(),
             'by_category' => $ownersData->groupBy('category')
                 ->map(function ($item) {
                     return count($item);
                 }),
-            'by_barangay' => $ownersData->groupBy('user.address.barangay.barangay_name')
-                ->map(function ($item) {
-                    return count($item);
-                })
+            'by_barangay' => $ownersData->groupBy(function($owner) {
+                return optional(optional($owner->user)->address)->barangay->barangay_name ?? 'Unknown';
+            })
+            ->map(function ($item) {
+                return count($item);
+            })
         ];
 
         // Get sample data
@@ -179,7 +180,7 @@ class VetReportController extends Controller
             ->map(function ($owner) {
                 return [
                     'created_at' => $owner->created_at,
-                    'name' => $owner->user->complete_name,
+                    'name' => optional($owner->user)->complete_name ?? 'N/A',
                     'category' => $owner->category,
                     'barangay' => optional(optional($owner->user)->address)->barangay->barangay_name ?? 'N/A'
                 ];

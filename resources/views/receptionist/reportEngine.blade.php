@@ -212,17 +212,6 @@
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Owner Category</label>
-                                <select name="owner_category"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                    <option value="">All Categories</option>
-                                    @foreach($categories as $category)
-                                        <option value="{{ $category->id }}">{{ $category->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div>
                                 <label class="block text-sm font-medium text-gray-700">Barangay</label>
                                 <select name="barangay_id"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
@@ -259,9 +248,6 @@
                             <div class="mb-4">
                                 <h4 class="text-sm font-semibold text-gray-700 mb-2">Applied Filters</h4>
                                 <div class="space-y-1">
-                                    <p id="clients-preview-category" class="text-sm text-gray-600">
-                                        Category: All Categories
-                                    </p>
                                     <p id="clients-preview-barangay" class="text-sm text-gray-600">
                                         Barangay: All Barangays
                                     </p>
@@ -298,13 +284,12 @@
                                         <thead class="bg-gray-50">
                                             <tr>
                                                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Name</th>
-                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Category</th>
                                                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Barangay</th>
                                             </tr>
                                         </thead>
                                         <tbody id="clients-preview-table-body" class="bg-white divide-y divide-gray-200">
                                             <tr>
-                                                <td colspan="3" class="px-3 py-2 text-center text-gray-500">
+                                                <td colspan="2" class="px-3 py-2 text-center text-gray-500">
                                                     Select filters to see preview data
                                                 </td>
                                             </tr>
@@ -1005,32 +990,59 @@ function initializeReportEngine() {
 
     // Update clients preview with data
     function updateClientsPreview(data, form) {
-        // Update filter displays
-        const categorySelect = form.querySelector('select[name="owner_category"]');
+        // Update filter displays - only show barangay filter
         const barangaySelect = form.querySelector('select[name="barangay_id"]');
         
-        document.getElementById('clients-preview-category').textContent = 
-            `Category: ${categorySelect.options[categorySelect.selectedIndex].text}`;
+        // Hide the category filter display if it exists
+        const categoryElement = document.getElementById('clients-preview-category');
+        if (categoryElement) {
+            categoryElement.style.display = 'none';
+        }
+        
         document.getElementById('clients-preview-barangay').textContent = 
-            `Barangay: ${barangaySelect.options[barangaySelect.selectedIndex].text}`;
+            `Barangay: ${barangaySelect.value ? barangaySelect.options[barangaySelect.selectedIndex].text : 'All Barangays'}`;
 
         // Update summary statistics
         document.getElementById('clients-preview-total').textContent = data.summary.total;
 
         // Update sample data table
         const tableBody = document.getElementById('clients-preview-table-body');
+        
+        // Update table header to only show name and barangay columns
+        const tableHeader = document.querySelector('#clients-preview table thead tr');
+        if (tableHeader) {
+            tableHeader.innerHTML = `
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Name</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Barangay</th>
+            `;
+        }
+        
         if (data.samples && data.samples.length > 0) {
-            tableBody.innerHTML = data.samples.map(client => `
+            tableBody.innerHTML = data.samples.map(client => {
+                // Handle barangay display - check multiple possible paths
+                let barangayDisplay = 'N/A';
+                
+                if (client.address && client.address.barangay) {
+                    barangayDisplay = client.address.barangay.barangay_name || client.address.barangay;
+                } else if (client.barangay) {
+                    barangayDisplay = client.barangay.barangay_name || client.barangay;
+                } else if (client.barangay_name) {
+                    barangayDisplay = client.barangay_name;
+                } else if (client.user && client.user.address && client.user.address.barangay) {
+                    barangayDisplay = client.user.address.barangay.barangay_name || client.user.address.barangay;
+                }
+                
+                return `
                 <tr>
-                    <td class="px-3 py-2">${client.name}</td>
-                    <td class="px-3 py-2">${client.category || 'N/A'}</td>
-                    <td class="px-3 py-2">${client.barangay || 'N/A'}</td>
+                    <td class="px-3 py-2">${client.complete_name || client.name || 'N/A'}</td>
+                    <td class="px-3 py-2">${barangayDisplay}</td>
                 </tr>
-            `).join('');
+                `;
+            }).join('');
         } else {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="3" class="px-3 py-2 text-center text-gray-500">
+                    <td colspan="2" class="px-3 py-2 text-center text-gray-500">
                         No data available for selected filters
                     </td>
                 </tr>
@@ -1213,26 +1225,8 @@ function initializeReportEngine() {
             }
         });
 
-        // Set default dates
-        const dateInputs = form.querySelectorAll('input[type="date"]');
-        if (dateInputs.length > 0) {
-            const today = new Date();
-            const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(today.getDate() - 30);
-            
-            const dateFrom = form.querySelector('input[name="date_from"]');
-            const dateTo = form.querySelector('input[name="date_to"]');
-            
-            if (dateFrom && !dateFrom.value) {
-                dateFrom.value = thirtyDaysAgo.toISOString().split('T')[0];
-            }
-            
-            if (dateTo && !dateTo.value) {
-                dateTo.value = today.toISOString().split('T')[0];
-            }
-        }
-
-        // Add change event listeners to all form inputs to update preview
+        // Remove the default date setting code
+        // Just keep the change event listeners
         form.querySelectorAll('select, input[type="date"]').forEach(input => {
             input.addEventListener('change', () => updatePreview(formType));
         });
