@@ -4,6 +4,7 @@ use App\Http\Controllers\TransactionSubtypeController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\NewOwnerController;
 use App\Http\Controllers\ReController;
+use App\Http\Controllers\VetReportController;
 use App\Http\Controllers\NewVaccineController;
 use App\Http\Controllers\NewBarangayController;
 use App\Http\Controllers\NewSpeciesController;
@@ -373,6 +374,9 @@ Route::group(['middleware' => 'receptionist'], function () {
     // API for report previews
     Route::post('/api/receptionist/reports/preview', [App\Http\Controllers\VetReportController::class, 'preview'])
         ->name('receptionist.reports.preview');
+
+        Route::get('reports/download/{id}', [VetReportController::class, 'download'])->name('reports.downloadfromRec');
+        Route::delete('reports/delete/{id}', [VetReportController::class, 'delete'])->name('reports.deletefromRec');
     
      Route::get('/transactions/reports', [App\Http\Controllers\VetReportController::class, 'transactionReportView'])
         ->name('receptionist.view.transactions');

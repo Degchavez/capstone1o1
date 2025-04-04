@@ -710,14 +710,14 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex space-x-3">
-                                            <a href="{{ route('reports.download', $report) }}" 
+                                            <a href="{{ route('reports.downloadfromRec', $report->id) }}" 
                                                 class="text-blue-600 hover:text-blue-900 flex items-center">
                                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                                                 </svg>
                                                 Download
                                             </a>
-                                            <form action="{{ route('reports.delete', $report) }}" method="POST" 
+                                            <form action="{{ route('reports.deletefromRec', $report->id) }}" method="POST" 
                                                   onsubmit="return confirm('Are you sure you want to delete this report?');"
                                                   class="inline">
                                                 @csrf

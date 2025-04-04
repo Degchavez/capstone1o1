@@ -48,22 +48,37 @@ class VetReportController extends Controller
             'designations'
         ));
     }
+
     public function transactionReportView(Request $request)
     {
         // Match the form input names!
         $filters = $request->only([
-            'transaction_type_id', 
-            'transaction_subtype_id', 
-            'status', 
-            'date_from', 
+            'transaction_type_id',
+            'transaction_subtype_id',
+            'status',
+            'date_from',
             'date_to'
         ]);
     
+        // Parse dates, fallback to default date ranges if not provided
+        $dateFrom = \Carbon\Carbon::parse($filters['date_from'] ?? now()->subYear());
+        $dateTo = \Carbon\Carbon::parse($filters['date_to'] ?? now());
+    
+        // Check if the report already exists with the same filters and date range
+        $existingReport = Report::where('report_type', 'transactions')
+                                ->where('date_from', $filters['date_from'])
+                                ->where('date_to', $filters['date_to'])
+                                ->where('parameters', json_encode($filters))
+                                ->first();
+    
+        // If the report already exists, skip generation and return a message
+        if ($existingReport) {
+            return back()->with('info', 'A report with the same filters and date range has already been generated.');
+        }
+    
+        // Fetch transactions based on the filters
         $transactions = Transaction::with('transactionType', 'transactionSubtype', 'owner', 'animal.species', 'animal.breed')
-            ->whereBetween('created_at', [
-                $filters['date_from'] ?? now()->subYear(), 
-                $filters['date_to'] ?? now()
-            ])
+            ->whereBetween('created_at', [$dateFrom, $dateTo])
             ->when(isset($filters['transaction_type_id']), function ($query) use ($filters) {
                 return $query->where('transaction_type_id', $filters['transaction_type_id']);
             })
@@ -75,20 +90,82 @@ class VetReportController extends Controller
             })
             ->get();
         
+        // Generate summary statistics (completed, pending, cancelled counts)
         $summary = $this->generateSummaryStatistics($transactions);
     
+        // Create a new report record in the database
+        $report = Report::create([
+            'user_id' => auth()->user()->user_id,
+            'report_type' => 'transactions',
+            'date_from' => $filters['date_from'],
+            'date_to' => $filters['date_to'],
+            'parameters' => $filters,
+            'generated_by' => auth()->user()->user_id,
+            'status' => 'completed',
+            'file_path' => '', // File path will be updated after saving the file
+        ]);
+    
+        // Load the PDF view and pass the necessary data
         $pdf = PDF::loadView('reports.pdf.receptionist.transactions', [
             'veterinarian' => auth()->user(),
-            'dateFrom' => \Carbon\Carbon::parse($filters['date_from']),
-            'dateTo' => \Carbon\Carbon::parse($filters['date_to']),
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
             'filters' => $filters,
             'summary' => $summary,
             'transactions' => $transactions,
         ]);
+        
+        // Generate filename
+        $fileName = 'transaction_report_' . now()->format('Y_m_d_H_i_s') . '.pdf';
+        $filePath = 'reports/' . $fileName;
     
-        return $pdf->download('transaction_report_' . now()->format('Y_m_d_H_i_s') . '.pdf');
+        // Save the PDF file to storage
+        if (!Storage::disk('public')->put($filePath, $pdf->output())) {
+            throw new \Exception('Failed to save the PDF file.');
+        }
+    
+        // Update the report record with the file path
+        $report->update([
+            'file_path' => $filePath
+        ]);
+    
+        // Return the generated PDF for download
+        return $pdf->download($fileName);
     }
-    
+
+     // New method to download the report
+    public function download($id)
+    {
+        // Find the report by ID
+        $report = Report::findOrFail($id);
+
+        // Check if file exists in storage
+        if (Storage::disk('public')->exists($report->file_path)) {
+            // Return the file for download
+            return response()->download(storage_path("app/public/{$report->file_path}"));
+        }
+
+        // If file doesn't exist, return an error
+        return back()->with('error', 'The requested report file does not exist.');
+    }
+
+    // New method to delete the report
+    public function delete($id)
+    {
+        // Find the report by ID
+        $report = Report::findOrFail($id);
+
+        // Check if the file exists in storage and delete it
+        if (Storage::disk('public')->exists($report->file_path)) {
+            Storage::disk('public')->delete($report->file_path);
+        }
+
+        // Delete the report record from the database
+        $report->delete();
+
+        // Redirect back with a success message
+        return back()->with('success', 'Report deleted successfully.');
+    }
 
     private function generateSummaryStatistics($transactions)
     {
