@@ -120,142 +120,151 @@ new #[Layout('layouts.guest')] class extends Component
 }
 
 
-?>
-<div class="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-indigo-100 py-12 px-4 sm:px-6 lg:px-2">
-    <div class="w-[95%] mx-auto bg-white/80 backdrop-blur-sm shadow-xl rounded-2xl p-8">
-        <!-- Logo and Header remain the same -->
-        <div class="text-center mb-8">
-            <a href="/" class="inline-block">
-                <img class="h-24 w-auto mx-auto" src="{{ asset('assets/1.jpg') }}" alt="Veterinary Office Logo">
-            </a>
-            <h2 class="mt-6 text-3xl font-bold text-gray-900">
-                Create your account
-            </h2>
-            <p class="mt-2 text-sm text-gray-600">
-                Register as an Animal Owner
-            </p>
-        </div>
-
-        <form wire:submit.prevent="register" class="space-y-6">
-            <!-- Complete Name -->
-            <div>
-                <x-input-label for="complete_name" :value="__('Full Name')" />
-                <x-text-input wire:model="complete_name" id="complete_name" class="block mt-1 w-full" type="text" required autofocus />
-                <x-input-error :messages="$errors->get('complete_name')" class="mt-2" />
+?><div class="relative min-h-screen flex items-center justify-center">
+    
+    <!-- Background Image (Fixed Full-Page) -->
+    <div class="fixed inset-0 bg-cover bg-center z-0" 
+         style="background-image: url('{{ asset('assets/bg.jpg') }}');">
+    </div>
+    
+    <!-- Form Container with Gradient Overlay -->
+    <div class="flex justify-center items-center h-full">
+        <div class="w-full max-w-md space-y-8 bg-gradient-to-t from-white via-white/90 to-white/50 z-10 rounded-lg shadow-xl p-8">
+            
+            <!-- Logo and Header -->
+            <div class="text-center mb-8">
+                <a href="/" class="inline-block">
+                    <img class="h-24 w-auto mx-auto" src="{{ asset('assets/1.jpg') }}" alt="Veterinary Office Logo">
+                </a>
+                <h2 class="mt-6 text-3xl font-bold text-gray-900">
+                    Create your account
+                </h2>
+                <p class="mt-2 text-sm text-gray-600">
+                    Register as an Animal Owner
+                </p>
             </div>
 
-            <!-- Role -->
-            <div class="mt-4">
-                <x-input-label for="role" :value="__('Role')" />
-                <select wire:model="role" id="role" class="block mt-1 w-full" required wire:change="$refresh">
-                    <option value="1">Animal Owner</option>
-                    <!-- Add other roles here if needed -->
-                </select>
-                <x-input-error :messages="$errors->get('role')" class="mt-2" />
-            </div>
+            <form wire:submit.prevent="register" class="space-y-6">
+                <!-- Complete Name -->
+                <div>
+                    <x-input-label for="complete_name" :value="__('Full Name')" />
+                    <x-text-input wire:model="complete_name" id="complete_name" class="block mt-1 w-full" type="text" required autofocus />
+                    <x-input-error :messages="$errors->get('complete_name')" class="mt-2" />
+                </div>
 
-            <!-- Barangay Selection -->
-            <div class="mt-4">
-                <x-input-label for="barangay_id" :value="__('Barangay')" />
-                <select wire:model="barangay_id" id="barangay_id" class="block mt-1 w-full" required>
-                    <option value="">Select Barangay</option>
-                    @foreach($barangays as $barangay)
-                        <option value="{{ $barangay->id }}">{{ $barangay->barangay_name }}</option>
-                    @endforeach
-                </select>
-                <x-input-error :messages="$errors->get('barangay_id')" class="mt-2" />
-            </div>
-
-            <!-- Street Name -->
-            <div class="mt-4">
-                <x-input-label for="street" :value="__('Street Name')" />
-                <x-text-input wire:model="street" id="street" class="block mt-1 w-full" type="text" required />
-                <x-input-error :messages="$errors->get('street')" class="mt-2" />
-            </div>
-
-            <!-- Contact Number -->
-            <div class="mt-4">
-                <x-input-label for="contact_no" :value="__('Contact Number')" />
-                <x-text-input wire:model="contact_no" id="contact_no" class="block mt-1 w-full" type="text" />
-                <x-input-error :messages="$errors->get('contact_no')" class="mt-2" />
-            </div>
-
-            <!-- Gender -->
-            <div class="mt-4">
-                <x-input-label for="gender" :value="__('Gender')" />
-                <select wire:model="gender" id="gender" class="block mt-1 w-full" required>
-                    <option value="">Select Gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                </select>
-                <x-input-error :messages="$errors->get('gender')" class="mt-2" />
-            </div>
-
-            <!-- Birth Date -->
-            <div class="mt-4">
-                <x-input-label for="birth_date" :value="__('Birth Date')" />
-                <x-text-input wire:model="birth_date" id="birth_date" class="block mt-1 w-full" type="date" />
-                <x-input-error :messages="$errors->get('birth_date')" class="mt-2" />
-            </div>
-
-            <!-- Owner-Specific Fields -->
-            @if ($role == 1)
+                <!-- Role -->
                 <div class="mt-4">
-                    <x-input-label for="civil_status" :value="__('Civil Status')" />
-                    <select wire:model="civil_status" id="civil_status" class="block mt-1 w-full" required>
-                        <option value="">Select Civil Status</option>
-                        <option value="Married">Married</option>
-                        <option value="Separated">Separated</option>
-                        <option value="Single">Single</option>
-                        <option value="Widow">Widow</option>
+                    <x-input-label for="role" :value="__('Role')" />
+                    <select wire:model="role" id="role" class="block mt-1 w-full" required wire:change="$refresh">
+                        <option value="1">Animal Owner</option>
+                        <!-- Add other roles here if needed -->
                     </select>
-                    <x-input-error :messages="$errors->get('civil_status')" class="mt-2" />
+                    <x-input-error :messages="$errors->get('role')" class="mt-2" />
                 </div>
 
+                <!-- Barangay Selection -->
                 <div class="mt-4">
-                    <x-input-label :value="__('Categories (Select all that apply)')" class="mb-3" />
-                    <div class="space-y-3 bg-white/50 p-4 rounded-lg border border-gray-200">
-                        @foreach($categories as $category)
-                            <label class="flex items-center">
-                                <input type="checkbox" 
-                                    wire:model="selected_categories" 
-                                    value="{{ $category->id }}" 
-                                    class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-3">
-                                <span class="text-gray-700">{{ $category->name }}</span>
-                            </label>
+                    <x-input-label for="barangay_id" :value="__('Barangay')" />
+                    <select wire:model="barangay_id" id="barangay_id" class="block mt-1 w-full" required>
+                        <option value="">Select Barangay</option>
+                        @foreach($barangays as $barangay)
+                            <option value="{{ $barangay->id }}">{{ $barangay->barangay_name }}</option>
                         @endforeach
-                    </div>
-                    <x-input-error :messages="$errors->get('selected_categories')" class="mt-2" />
-                    <p class="mt-2 text-sm text-gray-500">You can select multiple categories if applicable.</p>
+                    </select>
+                    <x-input-error :messages="$errors->get('barangay_id')" class="mt-2" />
                 </div>
-            @endif
 
-            <!-- Email Address -->
-            <div class="mt-4">
-                <x-input-label for="email" :value="__('Email')" />
-                <x-text-input wire:model="email" id="email" class="block mt-1 w-full" type="email" required />
-                <x-input-error :messages="$errors->get('email')" class="mt-2" />
-            </div>
+                <!-- Street Name -->
+                <div class="mt-4">
+                    <x-input-label for="street" :value="__('Street Name')" />
+                    <x-text-input wire:model="street" id="street" class="block mt-1 w-full" type="text" required />
+                    <x-input-error :messages="$errors->get('street')" class="mt-2" />
+                </div>
 
-            <!-- Password -->
-            <div class="mt-4">
-                <x-input-label for="password" :value="__('Password')" />
-                <x-text-input wire:model="password" id="password" class="block mt-1 w-full" type="password" required />
-                <x-input-error :messages="$errors->get('password')" class="mt-2" />
-            </div>
+                <!-- Contact Number -->
+                <div class="mt-4">
+                    <x-input-label for="contact_no" :value="__('Contact Number')" />
+                    <x-text-input wire:model="contact_no" id="contact_no" class="block mt-1 w-full" type="text" />
+                    <x-input-error :messages="$errors->get('contact_no')" class="mt-2" />
+                </div>
 
-            <!-- Confirm Password -->
-            <div class="mt-4">
-                <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
-                <x-text-input wire:model="password_confirmation" id="password_confirmation" class="block mt-1 w-full" type="password" required />
-                <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-            </div>
+                <!-- Gender -->
+                <div class="mt-4">
+                    <x-input-label for="gender" :value="__('Gender')" />
+                    <select wire:model="gender" id="gender" class="block mt-1 w-full" required>
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                    <x-input-error :messages="$errors->get('gender')" class="mt-2" />
+                </div>
 
-            <div class="flex items-center justify-end mt-4">
-                <x-primary-button>
-                    {{ __('Register') }}
-                </x-primary-button>
-            </div>
-        </form>
+                <!-- Birth Date -->
+                <div class="mt-4">
+                    <x-input-label for="birth_date" :value="__('Birth Date')" />
+                    <x-text-input wire:model="birth_date" id="birth_date" class="block mt-1 w-full" type="date" />
+                    <x-input-error :messages="$errors->get('birth_date')" class="mt-2" />
+                </div>
+
+                <!-- Owner-Specific Fields -->
+                @if ($role == 1)
+                    <div class="mt-4">
+                        <x-input-label for="civil_status" :value="__('Civil Status')" />
+                        <select wire:model="civil_status" id="civil_status" class="block mt-1 w-full" required>
+                            <option value="">Select Civil Status</option>
+                            <option value="Married">Married</option>
+                            <option value="Separated">Separated</option>
+                            <option value="Single">Single</option>
+                            <option value="Widow">Widow</option>
+                        </select>
+                        <x-input-error :messages="$errors->get('civil_status')" class="mt-2" />
+                    </div>
+
+                    <div class="mt-4">
+                        <x-input-label :value="__('Categories (Select all that apply)')" class="mb-3" />
+                        <div class="space-y-3 bg-white/50 p-4 rounded-lg border border-gray-200">
+                            @foreach($categories as $category)
+                                <label class="flex items-center">
+                                    <input type="checkbox" 
+                                        wire:model="selected_categories" 
+                                        value="{{ $category->id }}" 
+                                        class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-3">
+                                    <span class="text-gray-700">{{ $category->name }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                        <x-input-error :messages="$errors->get('selected_categories')" class="mt-2" />
+                        <p class="mt-2 text-sm text-gray-500">You can select multiple categories if applicable.</p>
+                    </div>
+                @endif
+
+                <!-- Email Address -->
+                <div class="mt-4">
+                    <x-input-label for="email" :value="__('Email')" />
+                    <x-text-input wire:model="email" id="email" class="block mt-1 w-full" type="email" required />
+                    <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                </div>
+
+                <!-- Password -->
+                <div class="mt-4">
+                    <x-input-label for="password" :value="__('Password')" />
+                    <x-text-input wire:model="password" id="password" class="block mt-1 w-full" type="password" required />
+                    <x-input-error :messages="$errors->get('password')" class="mt-2" />
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="mt-4">
+                    <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
+                    <x-text-input wire:model="password_confirmation" id="password_confirmation" class="block mt-1 w-full" type="password" required />
+                    <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
+                </div>
+
+                <div class="flex items-center justify-end mt-4">
+                    <x-primary-button>
+                        {{ __('Register') }}
+                    </x-primary-button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>

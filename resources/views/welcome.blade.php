@@ -15,7 +15,7 @@
     </head>
     <body 
         class="antialiased font-sans min-h-screen flex flex-col" 
-        style="background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('{{ asset('assets/bg.jpg') }}');
+        style="background: url('{{ asset('assets/bg.jpg') }}');
                background-size: cover; 
                background-position: center; 
                background-attachment: fixed;">

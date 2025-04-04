@@ -32,10 +32,17 @@ new #[Layout('layouts.guest')] class extends Component
 
     }
 }; ?>
-<div class="min-h-screen bg-cover bg-center" style="background-image: url('{{ asset('assets/.jpg') }}');">
-    <!-- This outer div now has the background image, covering the whole screen -->
+<<!-- Outermost Parent Div -->
+<div class="relative min-h-screen flex items-center justify-center">
+    
+    <!-- Background Image (Fixed Full-Page) -->
+    <div class="fixed inset-0 bg-cover bg-center z-0" 
+         style="background-image: url('{{ asset('assets/bg.jpg') }}');">
+    </div>
+    
+    <!-- Form Container with Gradient Overlay -->
     <div class="flex justify-center items-center h-full">
-        <div class="w-full max-w-md space-y-8">
+        <div class="w-full max-w-md space-y-8 bg-gradient-to-t from-white via-white/90 to-white/50 z-10 rounded-lg shadow-xl p-8">
             <!-- The login form content -->
             <div class="text-center mb-8">
                 <a href="/">
