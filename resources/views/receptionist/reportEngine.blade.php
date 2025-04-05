@@ -193,27 +193,29 @@
                     <!-- Left: Form -->
                     <div>
                         <h3 class="text-lg font-medium text-gray-900 mb-4">Client Report Settings</h3>
-                        <form id="clients-form" action="{{ route('receptionist.reports.owners') }}" method="POST" class="space-y-4">
+                        <form id="clients-form" action="{{ route('receptionist.reports.owners') }}" method="GET" class="space-y-4">
                             @csrf
                             <input type="hidden" name="preview_type" value="owners">
-                            
+                    
+                            <!-- Date Range Fields -->
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700">From Date</label>
-                                    <input type="date" name="date_from" required
+                                    <label for="date_from" class="block text-sm font-medium text-gray-700">From Date</label>
+                                    <input type="date" name="date_from" id="date_from" required
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 </div>
-                                
+                    
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700">To Date</label>
-                                    <input type="date" name="date_to" required
+                                    <label for="date_to" class="block text-sm font-medium text-gray-700">To Date</label>
+                                    <input type="date" name="date_to" id="date_to" required
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 </div>
                             </div>
-
+                    
+                            <!-- Barangay Selection -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Barangay</label>
-                                <select name="barangay_id"
+                                <label for="barangay_id" class="block text-sm font-medium text-gray-700">Barangay</label>
+                                <select name="barangay_id" id="barangay_id"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     <option value="">All Barangays</option>
                                     @foreach($barangays as $barangay)
@@ -221,13 +223,15 @@
                                     @endforeach
                                 </select>
                             </div>
-                            
-                            <button type="submit" 
+                    
+                            <!-- Submit Button -->
+                            <button type="submit"
                                 class="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
                                 Generate Client Report
                             </button>
                         </form>
                     </div>
+                    
                     
                     <!-- Right: Preview -->
                     <div>

@@ -366,11 +366,14 @@ Route::get('/vet/{animal_id}/animal_profile', [VetController::class, 'showAnimal
 });
 
 Route::group(['middleware' => 'receptionist'], function () {
-    
+
+
+
     Route::prefix('rec_reports')->group(function () {
         Route::get('/receptionist/reports', [App\Http\Controllers\VetReportController::class, 'index'])
         ->name('receptionist.reports');
     
+
     // API for report previews
     Route::post('/api/receptionist/reports/preview', [App\Http\Controllers\VetReportController::class, 'preview'])
         ->name('receptionist.reports.preview');
@@ -380,11 +383,15 @@ Route::group(['middleware' => 'receptionist'], function () {
     
      Route::get('/transactions/reports', [App\Http\Controllers\VetReportController::class, 'transactionReportView'])
         ->name('receptionist.view.transactions');
+    
+        Route::get('/transactions/owners', [App\Http\Controllers\VetReportController::class, 'generateOwnerReport'])
+        ->name('receptionist.reports.owners');
+        
 
     Route::post('/transactions/reports', [App\Http\Controllers\VetReportController::class, 'generateRecTransactionReport'])
         ->name('receptionist.generate.transactions');
-    Route::post('/receptionist/reports/owners', [App\Http\Controllers\VetReportController::class, 'generateOwnerReport'])
-        ->name('receptionist.reports.owners');
+        
+  
     
     Route::post('/receptionist/reports/animals', [App\Http\Controllers\VetReportController::class, 'generateAnimalReport'])
         ->name('receptionist.reports.animals');

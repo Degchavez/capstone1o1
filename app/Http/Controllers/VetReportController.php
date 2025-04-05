@@ -610,102 +610,96 @@ class VetReportController extends Controller
 
     public function generateOwnerReport(Request $request)
     {
-        try {
-            $validated = $request->validate([
-                'date_from' => 'required|date',
-                'date_to' => 'required|date|after_or_equal:date_from',
-                'owner_category' => 'nullable|string',
-                'barangay_id' => 'nullable|exists:barangays,id',
-                'format' => 'nullable|in:pdf,excel'
-            ]);
-
-            // Query owners
-            $query = Owner::query()
-                ->with(['user', 'user.address.barangay', 'animals'])
-                ->whereBetween('created_at', [
-                    Carbon::parse($validated['date_from']),
-                    Carbon::parse($validated['date_to'])->endOfDay()
-                ]);
-
-            // Apply filters
-            if (!empty($validated['owner_category'])) {
-                $query->where('category', $validated['owner_category']);
-            }
-
-            if (!empty($validated['barangay_id'])) {
-                $query->whereHas('user.address', function($q) use ($validated) {
-                    $q->where('barangay_id', $validated['barangay_id']);
-                });
-            }
-
-            $owners = $query->get();
-
-            // Prepare data for PDF generation
-            $data = [
-                'owners' => $owners,
-                'dateFrom' => Carbon::parse($validated['date_from']),
-                'dateTo' => Carbon::parse($validated['date_to']),
-                'summary' => [
-                    'total' => $owners->count(),
-                    'byCategory' => $owners->groupBy('category')
-                        ->map(function ($group) {
-                            return [
-                                'count' => $group->count(),
-                                'animalCount' => $group->flatMap(function ($owner) {
-                                    return $owner->animals;
-                                })->count(),
-                            ];
-                        }),
-                    'byBarangay' => $owners->groupBy('user.address.barangay.barangay_name')
-                        ->map(function ($group) {
-                            return [
-                                'count' => $group->count(),
-                                'animalCount' => $group->flatMap(function ($owner) {
-                                    return $owner->animals;
-                                })->count(),
-                            ];
-                        }),
-                ],
-                'filters' => [
-                    'category' => !empty($validated['owner_category']) ? 
-                        $validated['owner_category'] : 'All Categories',
-                    'barangay' => !empty($validated['barangay_id']) ? 
-                        Barangay::find($validated['barangay_id'])->barangay_name : 'All Barangays',
-                ],
-                'receptionist' => auth()->user()
-            ];
-
-            // Generate PDF
-            $pdf = PDF::loadView('reports.pdf.receptionist.owners', $data);
-            
-            // Create filename
-            $fileName = "owners-report-" . now()->format('Y-m-d-His') . '.pdf';
-            $filePath = "reports/{$fileName}";
-            
-            // Save report record
-            $report = Report::create([
-                'user_id' => auth()->user()->user_id,
-                'report_type' => 'owners',
-                'date_from' => $validated['date_from'],
-                'date_to' => $validated['date_to'],
-                'parameters' => $validated,
-                'generated_by' => auth()->user()->user_id,
-                'status' => 'completed',
-                'file_path' => $filePath
-            ]);
-
-            // Save the PDF file
-            Storage::disk('public')->put($filePath, $pdf->output());
-
-            // Redirect to the download route
-            return redirect()->route('reports.download', $report);
-
-        } catch (\Exception $e) {
-            \Log::error('Owner Report generation failed: ' . $e->getMessage());
-            return back()->with('error', 'Failed to generate report: ' . $e->getMessage());
+        // Optional filters from request
+        $filters = $request->only([
+            'barangay_id',
+            'date_from',
+            'date_to',
+        ]);
+        
+        // Default to last year to now if dates are not provided
+        $dateFrom = \Carbon\Carbon::parse($filters['date_from'] ?? now()->subYear());
+        $dateTo = \Carbon\Carbon::parse($filters['date_to'] ?? now());
+        
+        // Query owners
+        $query = Owner::query()
+            ->with(['user', 'user.address.barangay', 'animals', 'transactions'])
+            ->whereBetween('created_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()]);
+        
+        // Apply barangay filter if provided
+        if (!empty($filters['barangay_id'])) {
+            $query->whereHas('user.address', function ($q) use ($filters) {
+                $q->where('barangay_id', $filters['barangay_id']);
+            });
         }
+        
+        // Get owners based on the filters
+        $owners = $query->get();
+        
+        // Summary data
+        $summary = [
+            'total' => $owners->count(),
+            'byBarangay' => $owners->groupBy('user.address.barangay.barangay_name')->map(function ($group) {
+                return [
+                    'count' => $group->count(),
+                    'animalCount' => $group->flatMap(fn($owner) => $owner->animals)->count(),
+                    'transactionCount' => $group->flatMap(fn($owner) => $owner->transactions)->count(),
+                ];
+            }),
+        ];
+    
+        // Get the receptionist's information
+        $receptionist = auth()->user(); // Assuming the receptionist is the authenticated user
+        
+        // Prepare data for PDF
+        $pdf = PDF::loadView('reports.pdf.receptionist.owners', [
+            'owners' => $owners,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'summary' => $summary,
+            'filters' => [
+                'barangay' => !empty($filters['barangay_id'])
+                    ? Barangay::find($filters['barangay_id'])->barangay_name
+                    : 'All Barangays',
+            ],
+            'receptionist' => $receptionist, // Pass the receptionist variable
+        ]);
+        
+        // Save PDF
+        $fileName = 'owners_report_' . now()->format('Y_m_d_H_i_s') . '.pdf';
+        $filePath = 'reports/' . $fileName;
+        
+        // Store the PDF file
+        if (!Storage::disk('public')->put($filePath, $pdf->output())) {
+            throw new \Exception('Failed to save the PDF file.');
+        }
+        
+        // Create report record
+        $report = Report::create([
+            'user_id' => auth()->user()->user_id,
+            'report_type' => 'owners',
+            'date_from' => $dateFrom->toDateString(),
+            'date_to' => $dateTo->toDateString(),
+            'parameters' => $filters,
+            'generated_by' => auth()->user()->user_id,
+            'status' => 'completed',
+            'file_path' => $filePath,
+        ]);
+        
+        $fileName = 'owners_report_' . now()->format('Y_m_d_H_i_s') . '.pdf';
+        $filePath = 'reports/' . $fileName;
+    
+        if (!Storage::disk('public')->put($filePath, $pdf->output())) {
+            throw new \Exception('Failed to save the PDF file.');
+        }
+    
+        $report->update(['file_path' => $filePath]);
+    
+        // ✅ Redirect to download route instead of returning the PDF directly
+        return redirect()->route('reports.downloadfromRec', $report->id);
     }
-
+    
+    
     public function generateAnimalReport(Request $request)
     {
         try {
