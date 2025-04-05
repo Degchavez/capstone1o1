@@ -51,7 +51,7 @@ class VetReportController extends Controller
 
     public function transactionReportView(Request $request)
     {
-        // Match the form input names!
+        // Optional filters from request
         $filters = $request->only([
             'transaction_type_id',
             'transaction_subtype_id',
@@ -60,52 +60,40 @@ class VetReportController extends Controller
             'date_to'
         ]);
     
-        // Parse dates, fallback to default date ranges if not provided
+        // Default to last year to now if dates are not provided
         $dateFrom = \Carbon\Carbon::parse($filters['date_from'] ?? now()->subYear());
         $dateTo = \Carbon\Carbon::parse($filters['date_to'] ?? now());
     
-        // Check if the report already exists with the same filters and date range
-        $existingReport = Report::where('report_type', 'transactions')
-                                ->where('date_from', $filters['date_from'])
-                                ->where('date_to', $filters['date_to'])
-                                ->where('parameters', json_encode($filters))
-                                ->first();
-    
-        // If the report already exists, skip generation and return a message
-        if ($existingReport) {
-            return back()->with('info', 'A report with the same filters and date range has already been generated.');
-        }
-    
-        // Fetch transactions based on the filters
+        // Fetch transactions (no filter requirement)
         $transactions = Transaction::with('transactionType', 'transactionSubtype', 'owner', 'animal.species', 'animal.breed')
             ->whereBetween('created_at', [$dateFrom, $dateTo])
-            ->when(isset($filters['transaction_type_id']), function ($query) use ($filters) {
+            ->when($request->filled('transaction_type_id'), function ($query) use ($filters) {
                 return $query->where('transaction_type_id', $filters['transaction_type_id']);
             })
-            ->when(isset($filters['transaction_subtype_id']), function ($query) use ($filters) {
+            ->when($request->filled('transaction_subtype_id'), function ($query) use ($filters) {
                 return $query->where('transaction_subtype_id', $filters['transaction_subtype_id']);
             })
-            ->when(isset($filters['status']), function ($query) use ($filters) {
+            ->when($request->filled('status'), function ($query) use ($filters) {
                 return $query->where('status', $filters['status']);
             })
             ->get();
-        
-        // Generate summary statistics (completed, pending, cancelled counts)
+    
+        // Generate summary
         $summary = $this->generateSummaryStatistics($transactions);
     
-        // Create a new report record in the database
+        // Create report record
         $report = Report::create([
             'user_id' => auth()->user()->user_id,
             'report_type' => 'transactions',
-            'date_from' => $filters['date_from'],
-            'date_to' => $filters['date_to'],
+            'date_from' => $dateFrom->toDateString(),
+            'date_to' => $dateTo->toDateString(),
             'parameters' => $filters,
             'generated_by' => auth()->user()->user_id,
             'status' => 'completed',
-            'file_path' => '', // File path will be updated after saving the file
+            'file_path' => '',
         ]);
     
-        // Load the PDF view and pass the necessary data
+        // Load the PDF view
         $pdf = PDF::loadView('reports.pdf.receptionist.transactions', [
             'veterinarian' => auth()->user(),
             'dateFrom' => $dateFrom,
@@ -114,24 +102,23 @@ class VetReportController extends Controller
             'summary' => $summary,
             'transactions' => $transactions,
         ]);
-        
-        // Generate filename
+    
+        // Save PDF file
         $fileName = 'transaction_report_' . now()->format('Y_m_d_H_i_s') . '.pdf';
         $filePath = 'reports/' . $fileName;
     
-        // Save the PDF file to storage
         if (!Storage::disk('public')->put($filePath, $pdf->output())) {
             throw new \Exception('Failed to save the PDF file.');
         }
     
-        // Update the report record with the file path
+        // Update report with file path
         $report->update([
             'file_path' => $filePath
         ]);
     
-        // Return the generated PDF for download
         return $pdf->download($fileName);
     }
+    
 
      // New method to download the report
     public function download($id)
