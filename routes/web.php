@@ -391,12 +391,10 @@ Route::group(['middleware' => 'receptionist'], function () {
     Route::post('/transactions/reports', [App\Http\Controllers\VetReportController::class, 'generateRecTransactionReport'])
         ->name('receptionist.generate.transactions');
         
-  
-    
-    Route::post('/receptionist/reports/animals', [App\Http\Controllers\VetReportController::class, 'generateAnimalReport'])
+    Route::get('/receptionist/reports/animals', [App\Http\Controllers\VetReportController::class, 'generateAnimalReport'])
         ->name('receptionist.reports.animals');
     
-    Route::post('/receptionist/reports/vaccinations', [App\Http\Controllers\ReportController::class, 'generateVaccinationReport'])
+    Route::get('/receptionist/reports/vaccinations', [App\Http\Controllers\VetReportController::class, 'generateVaccinationReport'])
         ->name('receptionist.reports.vaccinations');
     
     Route::post('/receptionist/reports/users', [App\Http\Controllers\ReportController::class, 'generateUserReport']);

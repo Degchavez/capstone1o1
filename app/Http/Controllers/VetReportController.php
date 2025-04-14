@@ -699,216 +699,187 @@ class VetReportController extends Controller
         return redirect()->route('reports.downloadfromRec', $report->id);
     }
     
-    
     public function generateAnimalReport(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'date_from' => 'required|date',
-                'date_to' => 'required|date|after_or_equal:date_from',
-                'species_id' => 'nullable|exists:species,id',
-                'breed_id' => 'nullable|exists:breeds,id',
-                'is_vaccinated' => 'nullable|in:0,1',
-                'format' => 'nullable|in:pdf,excel'
-            ]);
+{
+    try {
+        // Only date_from and date_to are required
+        $filters = $request->only([
+            'date_from',
+            'date_to',
+            'species_id',
+            'breed_id',
+            'is_vaccinated',
+        ]);
 
-            // Query animals
-            $query = Animal::query()
-                ->with(['owner.user', 'species', 'breed'])
-                ->whereBetween('created_at', [
-                    Carbon::parse($validated['date_from']),
-                    Carbon::parse($validated['date_to'])->endOfDay()
-                ]);
+        $dateFrom = \Carbon\Carbon::parse($filters['date_from'] ?? now()->subYear());
+        $dateTo = \Carbon\Carbon::parse($filters['date_to'] ?? now());
 
-            // Apply filters
-            if (!empty($validated['species_id'])) {
-                $query->where('species_id', $validated['species_id']);
-            }
+        // Build query
+        $query = Animal::query()
+            ->with(['owner.user', 'species', 'breed'])
+            ->whereBetween('created_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()]);
 
-            if (!empty($validated['breed_id'])) {
-                $query->where('breed_id', $validated['breed_id']);
-            }
-
-            if (isset($validated['is_vaccinated'])) {
-                $query->where('is_vaccinated', $validated['is_vaccinated']);
-            }
-
-            $animals = $query->get();
-
-            // Prepare data for PDF generation
-            $data = [
-                'animals' => $animals,
-                'dateFrom' => Carbon::parse($validated['date_from']),
-                'dateTo' => Carbon::parse($validated['date_to']),
-                'summary' => [
-                    'total' => $animals->count(),
-                    'vaccinated' => $animals->where('is_vaccinated', 1)->count(),
-                    'nonVaccinated' => $animals->where('is_vaccinated', 0)->count(),
-                    'bySpecies' => $animals->groupBy('species.name')
-                        ->map(function ($group) {
-                            return [
-                                'count' => $group->count(),
-                                'vaccinated' => $group->where('is_vaccinated', 1)->count(),
-                                'nonVaccinated' => $group->where('is_vaccinated', 0)->count(),
-                            ];
-                        }),
-                    'byBreed' => $animals->groupBy('breed.name')
-                        ->map(function ($group) {
-                            return [
-                                'count' => $group->count(),
-                                'vaccinated' => $group->where('is_vaccinated', 1)->count(),
-                                'nonVaccinated' => $group->where('is_vaccinated', 0)->count(),
-                            ];
-                        }),
-                ],
-                'filters' => [
-                    'species' => !empty($validated['species_id']) ? 
-                        Species::find($validated['species_id'])->name : 'All Species',
-                    'breed' => !empty($validated['breed_id']) ? 
-                        Species::find($validated['breed_id'])->name : 'All Breeds',
-                    'vaccination' => isset($validated['is_vaccinated']) ? 
-                        ($validated['is_vaccinated'] ? 'Vaccinated Only' : 'Non-Vaccinated Only') : 'All Animals',
-                ],
-                'receptionist' => auth()->user()
-            ];
-
-            // Generate PDF
-            $pdf = PDF::loadView('reports.pdf.receptionist.animals', $data);
-            
-            // Create filename
-            $fileName = "animals-report-" . now()->format('Y-m-d-His') . '.pdf';
-            $filePath = "reports/{$fileName}";
-            
-            // Save report record
-            $report = Report::create([
-                'user_id' => auth()->user()->user_id,
-                'report_type' => 'animals',
-                'date_from' => $validated['date_from'],
-                'date_to' => $validated['date_to'],
-                'parameters' => $validated,
-                'generated_by' => auth()->user()->user_id,
-                'status' => 'completed',
-                'file_path' => $filePath
-            ]);
-
-            // Save the PDF file
-            Storage::disk('public')->put($filePath, $pdf->output());
-
-            // Redirect to the download route
-            return redirect()->route('reports.download', $report);
-
-        } catch (\Exception $e) {
-            \Log::error('Animal Report generation failed: ' . $e->getMessage());
-            return back()->with('error', 'Failed to generate report: ' . $e->getMessage());
+        if (!empty($filters['species_id'])) {
+            $query->where('species_id', $filters['species_id']);
         }
-    }
 
-    public function generateVaccinationReport(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'date_from' => 'required|date',
-                'date_to' => 'required|date|after_or_equal:date_from',
-                'vaccine_id' => 'nullable|exists:vaccines,id',
-                'species_id' => 'nullable|exists:species,id',
-                'status' => 'nullable|in:0,1,2',
-                'format' => 'nullable|in:pdf,excel'
-            ]);
-
-            // Query vaccination transactions
-            $query = Transaction::query()
-                ->whereNotNull('vaccine_id')
-                ->with(['owner.user', 'animal.species', 'animal.breed', 'vaccine', 'vet', 'receptionist'])
-                ->whereBetween('created_at', [
-                    Carbon::parse($validated['date_from']),
-                    Carbon::parse($validated['date_to'])->endOfDay()
-                ]);
-
-            // Apply filters
-            if (!empty($validated['vaccine_id'])) {
-                $query->where('vaccine_id', $validated['vaccine_id']);
-            }
-
-            if (!empty($validated['species_id'])) {
-                $query->whereHas('animal', function($q) use ($validated) {
-                    $q->where('species_id', $validated['species_id']);
-                });
-            }
-
-            if (isset($validated['status'])) {
-                $query->where('status', $validated['status']);
-            }
-
-            $vaccinations = $query->get();
-
-            // Prepare data for PDF generation
-            $data = [
-                'vaccinations' => $vaccinations,
-                'dateFrom' => Carbon::parse($validated['date_from']),
-                'dateTo' => Carbon::parse($validated['date_to']),
-                'summary' => [
-                    'total' => $vaccinations->count(),
-                    'completed' => $vaccinations->where('status', 1)->count(),
-                    'pending' => $vaccinations->where('status', 0)->count(),
-                    'cancelled' => $vaccinations->where('status', 2)->count(),
-                    'byVaccine' => $vaccinations->groupBy('vaccine.vaccine_name')
-                        ->map(function ($group) {
-                            return [
-                                'count' => $group->count(),
-                                'completed' => $group->where('status', 1)->count(),
-                                'pending' => $group->where('status', 0)->count(),
-                                'cancelled' => $group->where('status', 2)->count(),
-                            ];
-                        }),
-                    'bySpecies' => $vaccinations->groupBy('animal.species.name')
-                        ->map(function ($group) {
-                            return [
-                                'count' => $group->count(),
-                                'completed' => $group->where('status', 1)->count(),
-                                'pending' => $group->where('status', 0)->count(),
-                                'cancelled' => $group->where('status', 2)->count(),
-                            ];
-                        }),
-                ],
-                'filters' => [
-                    'vaccine' => !empty($validated['vaccine_id']) ? 
-                        Vaccine::find($validated['vaccine_id'])->vaccine_name : 'All Vaccines',
-                    'species' => !empty($validated['species_id']) ? 
-                        Species::find($validated['species_id'])->name : 'All Species',
-                    'status' => isset($validated['status']) ? 
-                        ['Pending', 'Completed', 'Cancelled'][$validated['status']] : 'All Statuses',
-                ],
-                'receptionist' => auth()->user()
-            ];
-
-            // Generate PDF
-            $pdf = PDF::loadView('reports.pdf.receptionist.vaccinations', $data);
-            
-            // Create filename
-            $fileName = "vaccinations-report-" . now()->format('Y-m-d-His') . '.pdf';
-            $filePath = "reports/{$fileName}";
-            
-            //            // Save report record
-            $report = Report::create([
-                'user_id' => auth()->user()->user_id,
-                'report_type' => 'vaccinations',
-                'date_from' => $validated['date_from'],
-                'date_to' => $validated['date_to'],
-                'parameters' => $validated,
-                'generated_by' => auth()->user()->user_id,
-                'status' => 'completed',
-                'file_path' => $filePath
-            ]);
-
-            // Save the PDF file
-            Storage::disk('public')->put($filePath, $pdf->output());
-
-            // Redirect to the download route
-            return redirect()->route('reports.download', $report);
-
-        } catch (\Exception $e) {
-            \Log::error('Vaccination Report generation failed: ' . $e->getMessage());
-            return back()->with('error', 'Failed to generate report: ' . $e->getMessage());
+        if (!empty($filters['breed_id'])) {
+            $query->where('breed_id', $filters['breed_id']);
         }
+
+        if (isset($filters['is_vaccinated'])) {
+            $query->where('is_vaccinated', $filters['is_vaccinated']);
+        }
+
+        $animals = $query->get();
+
+        $data = [
+            'animals' => $animals,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'summary' => [
+                'total' => $animals->count(),
+                'vaccinated' => $animals->where('is_vaccinated', 1)->count(),
+                'nonVaccinated' => $animals->where('is_vaccinated', 0)->count(),
+                'bySpecies' => $animals->groupBy('species.name')->map(function ($group) {
+                    return [
+                        'count' => $group->count(),
+                        'vaccinated' => $group->where('is_vaccinated', 1)->count(),
+                        'nonVaccinated' => $group->where('is_vaccinated', 0)->count(),
+                    ];
+                }),
+                'byBreed' => $animals->groupBy('breed.name')->map(function ($group) {
+                    return [
+                        'count' => $group->count(),
+                        'vaccinated' => $group->where('is_vaccinated', 1)->count(),
+                        'nonVaccinated' => $group->where('is_vaccinated', 0)->count(),
+                    ];
+                }),
+            ]
+        ];
+
+        $fileName = 'animals_report_' . now()->format('Y_m_d_H_i_s') . '.pdf';
+        $filePath = 'reports/' . $fileName;
+
+        $pdf = PDF::loadView('reports.pdf.receptionist.animals', $data);
+
+        if (!Storage::disk('public')->put($filePath, $pdf->output())) {
+            throw new \Exception('Failed to save the PDF file.');
+        }
+
+        $report = Report::create([
+            'user_id' => auth()->user()->user_id,
+            'report_type' => 'animals',
+            'date_from' => $dateFrom->toDateString(),
+            'date_to' => $dateTo->toDateString(),
+            'parameters' => $filters,
+            'generated_by' => auth()->user()->user_id,
+            'status' => 'completed',
+            'file_path' => $filePath
+        ]);
+
+        return redirect()->route('reports.downloadfromRec', $report->id);
+
+    } catch (\Exception $e) {
+        \Log::error('Animal Report generation failed: ' . $e->getMessage());
+        return back()->with('error', 'Failed to generate report: ' . $e->getMessage());
     }
+}
+
+public function generateVaccinationReport(Request $request)
+{
+    try {
+        // Get date range or use defaults
+        $dateFrom = $request->filled('date_from') 
+            ? \Carbon\Carbon::parse($request->date_from)->startOfDay()
+            : now()->subYear()->startOfDay();
+
+        $dateTo = $request->filled('date_to') 
+            ? \Carbon\Carbon::parse($request->date_to)->endOfDay()
+            : now()->endOfDay();
+
+        // Start base query
+        $query = Transaction::query()
+            ->with(['owner.user', 'animal.species', 'animal.breed', 'vaccine', 'vet', 'receptionist'])
+            ->whereBetween('created_at', [$dateFrom, $dateTo]);
+
+        // Optional filters (apply only if present)
+        if ($request->filled('vaccine_id')) {
+            $query->where('vaccine_id', $request->vaccine_id);
+        }
+
+        if ($request->filled('species_id')) {
+            $query->whereHas('animal', function($q) use ($request) {
+                $q->where('species_id', $request->species_id);
+            });
+        }
+
+        if ($request->has('status') && $request->status !== '') {
+            $query->where('status', $request->status);
+        }
+
+        // Fetch results
+        $vaccinations = $query->get();
+
+        // Summary preparation
+        $summary = [
+            'total' => $vaccinations->count(),
+            'completed' => $vaccinations->where('status', 1)->count(),
+            'pending' => $vaccinations->where('status', 0)->count(),
+            'cancelled' => $vaccinations->where('status', 2)->count(),
+            'byVaccine' => $vaccinations->groupBy('vaccine.vaccine_name')->map(function ($group) {
+                return [
+                    'count' => $group->count(),
+                    'completed' => $group->where('status', 1)->count(),
+                    'pending' => $group->where('status', 0)->count(),
+                    'cancelled' => $group->where('status', 2)->count(),
+                ];
+            }),
+            'bySpecies' => $vaccinations->groupBy('animal.species.name')->map(function ($group) {
+                return [
+                    'count' => $group->count(),
+                    'completed' => $group->where('status', 1)->count(),
+                    'pending' => $group->where('status', 0)->count(),
+                    'cancelled' => $group->where('status', 2)->count(),
+                ];
+            }),
+        ];
+
+        // Prepare data for PDF
+        $data = [
+            'vaccinations' => $vaccinations,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'summary' => $summary,
+        ];
+
+        // PDF generation
+        $fileName = "vaccinations-report-" . now()->format('Y-m-d-His') . '.pdf';
+        $filePath = "reports/{$fileName}";
+
+        $pdf = PDF::loadView('reports.pdf.receptionist.vaccinations', $data);
+
+        if (!Storage::disk('public')->put($filePath, $pdf->output())) {
+            throw new \Exception('Failed to save the PDF file.');
+        }
+
+        // Create report entry
+        $report = Report::create([
+            'user_id' => auth()->user()->user_id,
+            'report_type' => 'vaccinations',
+            'date_from' => $dateFrom->toDateString(),
+            'date_to' => $dateTo->toDateString(),
+            'parameters' => $request->only(['vaccine_id', 'species_id', 'status']),
+            'generated_by' => auth()->user()->user_id,
+            'status' => 'completed',
+            'file_path' => $filePath
+        ]);
+
+        return redirect()->route('reports.downloadfromRec', $report->id);
+
+    } catch (\Exception $e) {
+        \Log::error('Vaccination Report generation failed: ' . $e->getMessage());
+        return back()->with('error', 'Failed to generate report: ' . $e->getMessage());
+    }
+}
 }
