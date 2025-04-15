@@ -12,6 +12,18 @@
                         <i class="fas fa-edit mr-2"></i>
                         Update Info
                     </a>
+                     <!-- ID Card Generation Button -->
+                     <div class="mt-4">
+                        <a href="#"
+                           onclick="openIdModal('{{ $animal->animal_id }}')"
+                           class="inline-flex items-center px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 transition-colors duration-200 shadow-sm font-medium text-sm">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/>
+                            </svg>
+                            Generate ID Card
+                        </a>
+                    </div>
+                 
                 </div>
             </div>
 
@@ -28,6 +40,7 @@
                               ($animal->is_vaccinated == 0 ? 'bg-red-500' : 'bg-yellow-500') }} 
                             border-2 border-white">
                         </div>
+                        
                     </div>
                 </div>
 
@@ -368,6 +381,40 @@
             </div>
         </div>
     </div>
+    
+    <!-- ID Modal -->
+    <div id="idModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Background overlay -->
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+
+            <!-- Modal panel -->
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+                <!-- Close button -->
+                <div class="absolute top-0 right-0 pt-4 pr-4">
+                    <button type="button" onclick="closeIdModal()" class="text-gray-400 hover:text-gray-500">
+                        <span class="sr-only">Close</span>
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Modal content will be loaded here -->
+                <div id="IdModalContent" class="p-6">
+                    <div class="flex justify-center">
+                        <svg class="animate-spin -ml-1 mr-3 h-10 w-10 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p class="text-lg font-medium text-gray-700">Loading ID details...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         const transactionSubtypes = @json($transactionSubtypes);
@@ -452,6 +499,49 @@
             const modalContent = modal.querySelector('.inline-block');
             if (event.target === modal) {
                 closeTransactionModal();
+            }
+        });
+
+        function openIdModal(animalId) {
+            // Show modal
+            document.getElementById('idModal').classList.remove('hidden');
+            
+            // Fetch transaction details
+            fetch(`/animal-id/${animalId}`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('IdModalContent').innerHTML = html;
+                })
+                .catch(error => {
+                    document.getElementById('IdModalContent').innerHTML = `
+                        <div class="text-center text-red-500">
+                            <p>Error loading transaction details. Please try again.</p>
+                        </div>
+                    `;
+                    console.error('Error:', error);
+                });
+        }
+
+        function closeIdModal() {
+            // Hide modal
+            document.getElementById('idModal').classList.add('hidden');
+            // Reset content to loading state
+            document.getElementById('idModalContent').innerHTML = `
+                <div class="flex justify-center">
+                    <svg class="animate-spin -ml-1 mr-3 h-10 w-10 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="text-lg font-medium text-gray-700">Loading transaction details...</p>
+                </div>
+            `;
+        }
+        // Close modal when clicking outside
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('transactionModal');
+            const modalContent = modal.querySelector('.inline-block');
+            if (event.target === modal) {
+                closeIdModal();
             }
         });
             </script>

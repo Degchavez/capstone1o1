@@ -18,6 +18,8 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log; // ✅ ADD THIS LINE
 use Illuminate\Support\Facades\Storage; // Add this line
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+
 
 
 
@@ -25,6 +27,20 @@ use Illuminate\Http\Request;
 
 class AnimalController extends Controller
 {
+    public function showID($animal_id)
+    {
+        $animal = Animal::with([
+            'owner.user',
+            'species',
+            'breed'
+        ])->where('animal_id', $animal_id)->first();
+
+        // Generate QR code with animal information
+        $qrCode = QrCode::size(200)->generate(route('animal.id', $animal_id));
+
+        return view('admin.animal_id', compact('animal', 'qrCode'));
+    }
+
     public function showProfile($animal_id)
     {
         $animal = Animal::with([

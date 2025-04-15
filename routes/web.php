@@ -37,6 +37,8 @@ Route::get('/', function () {
     return view('welcome', compact('veterinarians'));
 });
 
+Route::get('/animal-id/{animal_id}', [AnimalController::class, 'showID'])->name('animal.id');
+
 Route::middleware(['auth'])->get('/dashboard', function () {
     if (auth()->user()->role == 0) {
         return redirect()->route('admin-dashboard');

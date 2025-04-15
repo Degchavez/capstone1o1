@@ -8,10 +8,13 @@
                 <!-- Action Button -->
                 <div class="absolute top-4 right-4">
                     <a href="{{ route('rec.edit', $animal->animal_id) }}" 
-                       class="inline-flex items-center px-4 py-2 bg-white/90 backdrop-blur-sm rounded-lg text-sm font-medium text-gray-700 hover:bg-white transition-all">
-                        <i class="fas fa-edit mr-2"></i>
-                        Update Info
-                    </a>
+                        class="inline-flex items-center px-4 py-2 bg-white/90 backdrop-blur-sm rounded-lg text-sm font-medium text-gray-700 hover:bg-white transition-all">
+                         <i class="fas fa-edit mr-2"></i>
+                         Update Info
+                     </a>
+                     
+                    
+                     
                 </div>
             </div>
 
