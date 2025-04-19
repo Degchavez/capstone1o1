@@ -1188,15 +1188,42 @@ function initializeReportEngine() {
         // Update sample data table
         const tableBody = document.getElementById('vaccinations-preview-table-body');
         if (data.samples && data.samples.length > 0) {
-            tableBody.innerHTML = data.samples.map(vaccination => `
-                <tr>
-                    <td class="px-3 py-2">${vaccination.animal}</td>
-                    <td class="px-3 py-2">${vaccination.vaccine}</td>
-                    <td class="px-3 py-2">${vaccination.barangay}</td>
-                    <td class="px-3 py-2">${getStatusBadge(vaccination.status)}</td>
-                    <td class="px-3 py-2">${formatDate(vaccination.created_at)}</td>
-                </tr>
-            `).join('');
+            tableBody.innerHTML = data.samples.map(vaccination => {
+                // Convert status number to text and style
+                let statusText;
+                let statusClass;
+                switch(vaccination.status) {
+                    case 0:
+                        statusText = 'Pending';
+                        statusClass = 'bg-yellow-100 text-yellow-800';
+                        break;
+                    case 1:
+                        statusText = 'Completed';
+                        statusClass = 'bg-green-100 text-green-800';
+                        break;
+                    case 2:
+                        statusText = 'Cancelled';
+                        statusClass = 'bg-red-100 text-red-800';
+                        break;
+                    default:
+                        statusText = 'Unknown';
+                        statusClass = 'bg-gray-100 text-gray-800';
+                }
+
+                return `
+                    <tr>
+                        <td class="px-3 py-2">${vaccination.animal}</td>
+                        <td class="px-3 py-2">${vaccination.vaccine}</td>
+                        <td class="px-3 py-2">${vaccination.barangay}</td>
+                        <td class="px-3 py-2">
+                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusClass}">
+                                ${statusText}
+                            </span>
+                        </td>
+                        <td class="px-3 py-2">${formatDate(vaccination.created_at)}</td>
+                    </tr>
+                `;
+            }).join('');
         } else {
             tableBody.innerHTML = `
                 <tr>
