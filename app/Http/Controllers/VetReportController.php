@@ -325,7 +325,6 @@ class VetReportController extends Controller
     private function previewAnimals(Request $request)
     {
         try {
-            // Get filters matching the report generation method
             $filters = $request->only([
                 'date_from',
                 'date_to',
@@ -335,7 +334,6 @@ class VetReportController extends Controller
                 'barangay_id',
             ]);
 
-            // Build query with explicit eager loading - matching the report generation
             $query = Animal::query()
                 ->with([
                     'owner.user.address.barangay',
@@ -348,7 +346,7 @@ class VetReportController extends Controller
                     Carbon::parse($request->date_to)->endOfDay()
                 ]);
 
-            // Apply filters exactly as in generateAnimalReport
+            // Apply filters
             if (!empty($filters['species_id'])) {
                 $query->where('species_id', $filters['species_id']);
             }
@@ -357,34 +355,43 @@ class VetReportController extends Controller
                 $query->where('breed_id', $filters['breed_id']);
             }
 
-            if (isset($filters['is_vaccinated'])) {
-                $query->where('is_vaccinated', $filters['is_vaccinated']);
+            // Modified vaccination status filter
+            if (isset($filters['is_vaccinated']) && $filters['is_vaccinated'] !== '') {
+                if ($filters['is_vaccinated'] == '2') {
+                    // No Vaccination Required: not 0 and not 1
+                    $query->whereNotIn('is_vaccinated', [0, 1]);
+                } else {
+                    $query->where('is_vaccinated', $filters['is_vaccinated']);
+                }
             }
 
-            // Apply barangay filter exactly as in generateAnimalReport
             if (!empty($filters['barangay_id'])) {
                 $query->whereHas('owner.user.address', function ($q) use ($filters) {
                     $q->where('barangay_id', $filters['barangay_id']);
                 });
             }
 
-            // Execute query
             $animals = $query->get();
 
-            // Prepare summary matching the report format
+            // Modified summary to include "not required" category
             $summary = [
                 'total' => $animals->count(),
                 'vaccinated' => $animals->where('is_vaccinated', 1)->count(),
                 'not_vaccinated' => $animals->where('is_vaccinated', 0)->count(),
+                'not_required' => $animals->whereNotIn('is_vaccinated', [0, 1])->count(),
                 'by_species' => $animals->groupBy('species.name')
                     ->map(function ($group) {
-                        return $group->count();
+                        return [
+                            'count' => $group->count(),
+                            'vaccinated' => $group->where('is_vaccinated', 1)->count(),
+                            'not_vaccinated' => $group->where('is_vaccinated', 0)->count(),
+                            'not_required' => $group->whereNotIn('is_vaccinated', [0, 1])->count(),
+                        ];
                     })
             ];
 
-            // Prepare samples matching the report format
+            // Modified samples to handle vaccination status
             $samples = $animals->take(5)->map(function ($animal) {
-                // Get barangay name with proper null checking
                 $barangayName = null;
                 if ($animal->owner && 
                     $animal->owner->user && 
@@ -393,12 +400,22 @@ class VetReportController extends Controller
                     $barangayName = $animal->owner->user->address->barangay->barangay_name;
                 }
 
+                // Modified vaccination status logic
+                $vaccinationStatus = 'Unknown';
+                if ($animal->is_vaccinated === 1) {
+                    $vaccinationStatus = 'Yes';
+                } elseif ($animal->is_vaccinated === 0) {
+                    $vaccinationStatus = 'No';
+                } else {
+                    $vaccinationStatus = 'Not Required';
+                }
+
                 return [
                     'name' => $animal->name,
                     'species' => $animal->species->name ?? 'Unknown',
                     'breed' => $animal->breed->name ?? 'Unknown',
                     'barangay' => $barangayName ?? 'Unknown',
-                    'is_vaccinated' => $animal->is_vaccinated ? 'Yes' : 'No',
+                    'is_vaccinated' => $vaccinationStatus,
                     'created_at' => $animal->created_at
                 ];
             });
@@ -740,7 +757,6 @@ class VetReportController extends Controller
     public function generateAnimalReport(Request $request)
     {
         try {
-            // Only date_from and date_to are required
             $filters = $request->only([
                 'date_from',
                 'date_to',
@@ -753,7 +769,6 @@ class VetReportController extends Controller
             $dateFrom = \Carbon\Carbon::parse($filters['date_from'] ?? now()->subYear());
             $dateTo = \Carbon\Carbon::parse($filters['date_to'] ?? now());
 
-            // Build query with explicit eager loading
             $query = Animal::query()
                 ->with([
                     'owner.user.address.barangay',
@@ -763,6 +778,7 @@ class VetReportController extends Controller
                 ->select('animals.*')
                 ->whereBetween('created_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()]);
 
+            // Apply filters
             if (!empty($filters['species_id'])) {
                 $query->where('species_id', $filters['species_id']);
             }
@@ -771,16 +787,23 @@ class VetReportController extends Controller
                 $query->where('breed_id', $filters['breed_id']);
             }
 
+            // Modified vaccination status filter
             if (isset($filters['is_vaccinated'])) {
-                $query->where('is_vaccinated', $filters['is_vaccinated']);
+                if ($filters['is_vaccinated'] === '') {
+                    // Show all
+                } elseif ($filters['is_vaccinated'] === 'not_required') {
+                    $query->whereNull('is_vaccinated');
+                } else {
+                    $query->where('is_vaccinated', $filters['is_vaccinated']);
+                }
             }
-            
+
             if (!empty($filters['barangay_id'])) {
                 $query->whereHas('owner.user.address', function ($q) use ($filters) {
                     $q->where('barangay_id', $filters['barangay_id']);
                 });
             }
-            
+
             $animals = $query->get();
 
             $data = [
@@ -791,11 +814,13 @@ class VetReportController extends Controller
                     'total' => $animals->count(),
                     'vaccinated' => $animals->where('is_vaccinated', 1)->count(),
                     'nonVaccinated' => $animals->where('is_vaccinated', 0)->count(),
+                    'notRequired' => $animals->whereNull('is_vaccinated')->count(),
                     'bySpecies' => $animals->groupBy('species.name')->map(function ($group) {
                         return [
                             'count' => $group->count(),
                             'vaccinated' => $group->where('is_vaccinated', 1)->count(),
                             'nonVaccinated' => $group->where('is_vaccinated', 0)->count(),
+                            'notRequired' => $group->whereNull('is_vaccinated')->count(),
                         ];
                     }),
                     'byBreed' => $animals->groupBy('breed.name')->map(function ($group) {
@@ -803,11 +828,11 @@ class VetReportController extends Controller
                             'count' => $group->count(),
                             'vaccinated' => $group->where('is_vaccinated', 1)->count(),
                             'nonVaccinated' => $group->where('is_vaccinated', 0)->count(),
+                            'notRequired' => $group->whereNull('is_vaccinated')->count(),
                         ];
                     }),
                 ],
                 'samples' => $animals->take(5)->map(function ($animal) {
-                    // Get barangay name with proper null checking
                     $barangayName = null;
                     if ($animal->owner && 
                         $animal->owner->user && 
@@ -821,7 +846,8 @@ class VetReportController extends Controller
                         'species' => $animal->species->name ?? 'Unknown',
                         'breed' => $animal->breed->name ?? 'Unknown',
                         'barangay' => $barangayName ?? 'Unknown',
-                        'is_vaccinated' => $animal->is_vaccinated ? 'Yes' : 'No',
+                        'is_vaccinated' => $animal->is_vaccinated === null ? 'Not Required' : 
+                                         ($animal->is_vaccinated ? 'Yes' : 'No'),
                     ];
                 }),
             ];

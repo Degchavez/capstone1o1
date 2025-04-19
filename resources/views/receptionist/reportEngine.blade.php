@@ -356,6 +356,7 @@
                                     <option value="">All</option>
                                     <option value="1">Vaccinated</option>
                                     <option value="0">Not Vaccinated</option>
+                                    <option value="2">No Vaccination Required</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -428,7 +429,7 @@
                             <!-- Preview Summary -->
                             <div class="mb-4">
                                 <h4 class="text-sm font-semibold text-gray-700 mb-2">Summary</h4>
-                                <div class="grid grid-cols-3 gap-4">
+                                <div class="grid grid-cols-4 gap-4">
                                     <div class="bg-white p-3 rounded-lg border">
                                         <div class="text-xs text-gray-500">Total Animals</div>
                                         <div id="animals-preview-total" class="text-lg font-bold text-gray-800">-</div>
@@ -440,6 +441,10 @@
                                     <div class="bg-white p-3 rounded-lg border">
                                         <div class="text-xs text-gray-500">Not Vaccinated</div>
                                         <div id="animals-preview-not-vaccinated" class="text-lg font-bold text-red-600">-</div>
+                                    </div>
+                                    <div class="bg-white p-3 rounded-lg border">
+                                        <div class="text-xs text-gray-500">No Vaccination Required</div>
+                                        <div id="animals-preview-not-required" class="text-lg font-bold text-gray-600">-</div>
                                     </div>
                                 </div>
                             </div>
@@ -1080,20 +1085,20 @@ function initializeReportEngine() {
         const vaccinatedSelect = form.querySelector('select[name="is_vaccinated"]');
         const barangaySelect = form.querySelector('select[name="barangay_id"]');
 
-        
         document.getElementById('animals-preview-species').textContent = 
             `Species: ${speciesSelect.options[speciesSelect.selectedIndex].text}`;
         document.getElementById('animals-preview-breed').textContent = 
             `Breed: ${breedSelect && breedSelect.value ? breedSelect.options[breedSelect.selectedIndex].text : 'All Breeds'}`;
         document.getElementById('animals-preview-vaccinated').textContent = 
             `Vaccination: ${vaccinatedSelect.options[vaccinatedSelect.selectedIndex].text}`;
-            document.getElementById('animals-preview-barangay').textContent = 
+        document.getElementById('animals-preview-barangay').textContent = 
             `Barangay: ${barangaySelect && barangaySelect.value ? barangaySelect.options[barangaySelect.selectedIndex].text : 'All Barangays'}`;
 
         // Update summary statistics
         document.getElementById('animals-preview-total').textContent = data.summary.total;
         document.getElementById('animals-preview-vaccinated-count').textContent = data.summary.vaccinated;
         document.getElementById('animals-preview-not-vaccinated').textContent = data.summary.not_vaccinated;
+        document.getElementById('animals-preview-not-required').textContent = data.summary.not_required;
 
         // Update sample data table
         const tableBody = document.getElementById('animals-preview-table-body');
@@ -1104,20 +1109,31 @@ function initializeReportEngine() {
                     <td class="px-3 py-2">${animal.species}</td>
                     <td class="px-3 py-2">${animal.breed}</td>
                     <td class="px-3 py-2">${animal.barangay ?? 'N/A'}</td>
-
-                    <td class="px-3 py-2">${animal.is_vaccinated === 'Yes' 
-                        ? '<span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">Yes</span>' 
-                        : '<span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">No</span>'}</td>
+                    <td class="px-3 py-2">${getVaccinationStatusBadge(animal.is_vaccinated)}</td>
                 </tr>
             `).join('');
         } else {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="4" class="px-3 py-2 text-center text-gray-500">
+                    <td colspan="5" class="px-3 py-2 text-center text-gray-500">
                         No data available for selected filters
                     </td>
                 </tr>
             `;
+        }
+    }
+
+    // Add this helper function for vaccination status badges
+    function getVaccinationStatusBadge(status) {
+        switch(status) {
+            case 'Yes':
+                return '<span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">Vaccinated</span>';
+            case 'No':
+                return '<span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">Not Vaccinated</span>';
+            case 'Not Required':
+                return '<span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">Not Required</span>';
+            default:
+                return '<span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">Unknown</span>';
         }
     }
 
