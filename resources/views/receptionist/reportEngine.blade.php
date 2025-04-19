@@ -93,6 +93,17 @@
                                     <option value="2">Cancelled</option>
                                 </select>
                             </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Barangay</label>
+                                <select name="barangay_id" 
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <option value="">All Barangays</option>
+                                    @foreach($barangays as $barangay)
+                                        <option value="{{ $barangay->id }}">{{ $barangay->barangay_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                             
                             <button type="submit" 
                                 class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
@@ -128,6 +139,9 @@
                                     </p>
                                     <p id="transactions-preview-status" class="text-sm text-gray-600">
                                         Status: All Statuses
+                                    </p>
+                                    <p id="transactions-preview-barangay" class="text-sm text-gray-600">
+                                        Barangay: All Barangays
                                     </p>
                                 </div>
                             </div>
@@ -532,6 +546,17 @@
                                     <option value="2">Cancelled</option>
                                 </select>
                             </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Barangay</label>
+                                <select name="barangay_id" 
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <option value="">All Barangays</option>
+                                    @foreach($barangays as $barangay)
+                                        <option value="{{ $barangay->id }}">{{ $barangay->barangay_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                             
                             <button type="submit" 
                                 class="w-full bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2">
@@ -567,6 +592,9 @@
                                     </p>
                                     <p id="vaccinations-preview-status" class="text-sm text-gray-600">
                                         Status: All Statuses
+                                    </p>
+                                    <p id="vaccinations-preview-barangay" class="text-sm text-gray-600">
+                                        Barangay: All Barangays
                                     </p>
                                 </div>
                             </div>
@@ -610,6 +638,7 @@
                                             <tr>
                                                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Animal</th>
                                                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Vaccine</th>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Barangay</th>
                                                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Status</th>
                                                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Date</th>
                                             </tr>
@@ -690,39 +719,36 @@
                                         <div class="text-sm">
                                             @if($report->parameters)
                                                 @php
-                                                    $params = json_decode(json_encode($report->parameters), true);
+                                                    // Ensure we're working with an array by properly decoding the parameters
+                                                    $params = is_string($report->parameters) ? json_decode($report->parameters, true) : $report->parameters;
                                                 @endphp
                                                 
-                                                @foreach($params as $key => $value)
-                                                    @if($value && !in_array($key, ['date_from', 'date_to', 'format', 'preview_type']))
-                                                        <div class="mb-1">
-                                                            <span class="font-medium">{{ Str::title(str_replace('_', ' ', $key)) }}:</span>
-                                                            
-                                                            @if($key == 'status')
-                                                                @switch($value)
-                                                                    @case(0)
-                                                                        <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">Pending</span>
-                                                                        @break
-                                                                    @case(1)
-                                                                        <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">Completed</span>
-                                                                        @break
-                                                                    @case(2)
-                                                                        <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">Cancelled</span>
-                                                                        @break
-                                                                    @default
-                                                                        <span>{{ $value }}</span>
-                                                                @endswitch
-                                                            @elseif($key == 'is_vaccinated')
-                                                                {{ $value == 1 ? 'Yes' : 'No' }}
-                                                            @else
-                                                                {{ $value }}
-                                                            @endif
-                                                        </div>
-                                                    @endif
-                                                @endforeach
-                                                
-                                                @if(count(array_filter($params, function($v, $k) { return $v && !in_array($k, ['date_from', 'date_to', 'format', 'preview_type']); }, ARRAY_FILTER_USE_BOTH)) == 0)
-                                                    <span class="text-gray-500">No filters applied</span>
+                                                @if(is_array($params))
+                                                    @foreach($params as $key => $value)
+                                                        @if($value && !in_array($key, ['date_from', 'date_to', 'format', 'preview_type']))
+                                                            <div class="mb-1">
+                                                                <span class="font-medium">{{ Str::title(str_replace('_', ' ', $key)) }}:</span>
+                                                                
+                                                                @if($key == 'status')
+                                                                    @switch($value)
+                                                                        @case(0)
+                                                                            <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">Pending</span>
+                                                                            @break
+                                                                        @case(1)
+                                                                            <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">Completed</span>
+                                                                            @break
+                                                                        @case(2)
+                                                                            <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">Cancelled</span>
+                                                                            @break
+                                                                        @default
+                                                                            <span>{{ $value }}</span>
+                                                                    @endswitch
+                                                                @else
+                                                                    <span>{{ $value }}</span>
+                                                                @endif
+                                                            </div>
+                                                        @endif
+                                                    @endforeach
                                                 @endif
                                             @endif
                                         </div>
@@ -1143,6 +1169,7 @@ function initializeReportEngine() {
         const vaccineSelect = form.querySelector('select[name="vaccine_id"]');
         const speciesSelect = form.querySelector('select[name="species_id"]');
         const statusSelect = form.querySelector('select[name="status"]');
+        const barangaySelect = form.querySelector('select[name="barangay_id"]');
         
         document.getElementById('vaccinations-preview-vaccine').textContent = 
             `Vaccine: ${vaccineSelect.options[vaccineSelect.selectedIndex].text}`;
@@ -1150,6 +1177,8 @@ function initializeReportEngine() {
             `Species: ${speciesSelect.options[speciesSelect.selectedIndex].text}`;
         document.getElementById('vaccinations-preview-status').textContent = 
             `Status: ${statusSelect.options[statusSelect.selectedIndex].text}`;
+        document.getElementById('vaccinations-preview-barangay').textContent = 
+            `Barangay: ${barangaySelect.options[barangaySelect.selectedIndex].text}`;
 
         // Update summary statistics
         document.getElementById('vaccinations-preview-total').textContent = data.summary.total;
@@ -1163,6 +1192,7 @@ function initializeReportEngine() {
                 <tr>
                     <td class="px-3 py-2">${vaccination.animal}</td>
                     <td class="px-3 py-2">${vaccination.vaccine}</td>
+                    <td class="px-3 py-2">${vaccination.barangay}</td>
                     <td class="px-3 py-2">${getStatusBadge(vaccination.status)}</td>
                     <td class="px-3 py-2">${formatDate(vaccination.created_at)}</td>
                 </tr>
@@ -1170,7 +1200,7 @@ function initializeReportEngine() {
         } else {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="4" class="px-3 py-2 text-center text-gray-500">
+                    <td colspan="5" class="px-3 py-2 text-center text-gray-500">
                         No data available for selected filters
                     </td>
                 </tr>

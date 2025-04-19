@@ -437,7 +437,7 @@ class VetReportController extends Controller
     {
         $query = Transaction::query()
             ->whereNotNull('vaccine_id')
-            ->with('animal.species', 'animal.breed', 'vaccine', 'owner.user')
+            ->with('animal.species', 'animal.breed', 'vaccine', 'owner.user.address.barangay')
             ->whereBetween('created_at', [
                 Carbon::parse($request->date_from)->startOfDay(),
                 Carbon::parse($request->date_to)->endOfDay()
@@ -457,6 +457,13 @@ class VetReportController extends Controller
             $query->where('status', $request->status);
         }
 
+        // Add barangay filter
+        if ($request->filled('barangay_id')) {
+            $query->whereHas('owner.user.address', function($q) use ($request) {
+                $q->where('barangay_id', $request->barangay_id);
+            });
+        }
+
         // Clone query for counts
         $totalQuery = clone $query;
         $completedQuery = clone $query;
@@ -466,27 +473,19 @@ class VetReportController extends Controller
         $summary = [
             'total' => $totalQuery->count(),
             'completed' => $completedQuery->where('status', 1)->count(),
-            'pending' => $pendingQuery->where('status', 0)->count(),
-            'by_vaccine' => $query->get()->groupBy('vaccine.vaccine_name')
-                ->map(function ($item) {
-                    return count($item);
-                })
+            'pending' => $pendingQuery->where('status', 0)->count()
         ];
 
         // Get sample data
-        $samples = $query->latest()->take(5)
-            ->get()
-            ->map(function ($transaction) {
-                return [
-                    'created_at' => $transaction->created_at,
-                    'animal' => $transaction->animal->name,
-                    'species' => $transaction->animal->species->name,
-                    'vaccine' => $transaction->vaccine->vaccine_name,
-                    'owner' => $transaction->owner->user->complete_name,
-                    'status' => $transaction->status === 0 ? 'Pending' : 
-                               ($transaction->status === 1 ? 'Completed' : 'Cancelled')
-                ];
-            });
+        $samples = $query->take(5)->get()->map(function ($transaction) {
+            return [
+                'created_at' => $transaction->created_at,
+                'animal' => $transaction->animal->name ?? 'N/A',
+                'vaccine' => $transaction->vaccine->vaccine_name ?? 'N/A',
+                'barangay' => $transaction->owner->user->address->barangay->barangay_name ?? 'Unknown',
+                'status' => $transaction->status
+            ];
+        });
 
         return response()->json([
             'summary' => $summary,
@@ -884,21 +883,35 @@ class VetReportController extends Controller
     public function generateVaccinationReport(Request $request)
     {
         try {
-            // Get date range or use defaults
-            $dateFrom = $request->filled('date_from') 
-                ? \Carbon\Carbon::parse($request->date_from)->startOfDay()
-                : now()->subYear()->startOfDay();
+            // Validate required date fields
+            $request->validate([
+                'date_from' => 'required|date',
+                'date_to' => 'required|date'
+            ]);
 
-            $dateTo = $request->filled('date_to') 
-                ? \Carbon\Carbon::parse($request->date_to)->endOfDay()
-                : now()->endOfDay();
+            // Parse dates
+            $dateFrom = Carbon::parse($request->date_from)->startOfDay();
+            $dateTo = Carbon::parse($request->date_to)->endOfDay();
 
-            // Start base query
-            $query = Transaction::query()
-                ->with(['owner.user', 'animal.species', 'animal.breed', 'vaccine', 'vet', 'receptionist'])
-                ->whereBetween('created_at', [$dateFrom, $dateTo]);
+            // Get barangay name if barangay_id is provided
+            $barangay_name = 'All Barangays';
+            if ($request->filled('barangay_id')) {
+                $barangay = \App\Models\Barangay::find($request->barangay_id);
+                if ($barangay) {
+                    $barangay_name = $barangay->barangay_name;
+                }
+            }
 
-            // Optional filters (apply only if present)
+            // Base query with relationships
+            $query = Transaction::with([
+                'owner.user.address.barangay',  // Added address and barangay relationship
+                'animal.species',
+                'vaccine'
+            ])
+            ->whereNotNull('vaccine_id')
+            ->whereBetween('created_at', [$dateFrom, $dateTo]);
+
+            // Optional filters
             if ($request->filled('vaccine_id')) {
                 $query->where('vaccine_id', $request->vaccine_id);
             }
@@ -909,72 +922,132 @@ class VetReportController extends Controller
                 });
             }
 
-            if ($request->has('status') && $request->status !== '') {
+            if ($request->filled('status')) {
                 $query->where('status', $request->status);
             }
 
-            // Fetch results
-            $vaccinations = $query->get();
+            // Add barangay filter
+            if ($request->filled('barangay_id')) {
+                $query->whereHas('owner.user.address', function($q) use ($request) {
+                    $q->where('barangay_id', $request->barangay_id);
+                });
+            }
 
-            // Summary preparation
+            // Get transactions
+            $transactions = $query->get();
+
+            // Transform data for the view
+            $vaccinations = $transactions->map(function ($transaction) {
+                return [
+                    'created_at' => $transaction->created_at,
+                    'animal' => $transaction->animal->name ?? 'N/A',
+                    'species' => $transaction->animal->species->name ?? 'N/A',
+                    'owner' => $transaction->owner->user->complete_name ?? 'N/A',
+                    'vaccine' => $transaction->vaccine->vaccine_name ?? 'N/A',
+                    'status' => $transaction->status,
+                    'barangay' => $transaction->owner->user->address->barangay->barangay_name ?? 'Unknown'
+                ];
+            });
+
+            // Prepare summary data
+            $byVaccine = [];
+            $bySpecies = [];
+            $byBarangay = []; // Added barangay summary
+
+            foreach ($transactions as $transaction) {
+                $vaccineName = $transaction->vaccine->vaccine_name ?? 'Unknown';
+                $speciesName = $transaction->animal->species->name ?? 'Unknown';
+                $barangayName = $transaction->owner->user->address->barangay->barangay_name ?? 'Unknown';
+
+                // Initialize if not exists
+                if (!isset($byVaccine[$vaccineName])) {
+                    $byVaccine[$vaccineName] = ['count' => 0, 'completed' => 0, 'pending' => 0];
+                }
+                if (!isset($bySpecies[$speciesName])) {
+                    $bySpecies[$speciesName] = ['count' => 0, 'completed' => 0, 'pending' => 0];
+                }
+                if (!isset($byBarangay[$barangayName])) {
+                    $byBarangay[$barangayName] = ['count' => 0, 'completed' => 0, 'pending' => 0];
+                }
+
+                // Update counts
+                $byVaccine[$vaccineName]['count']++;
+                $bySpecies[$speciesName]['count']++;
+                $byBarangay[$barangayName]['count']++;
+
+                if ($transaction->status == 1) {
+                    $byVaccine[$vaccineName]['completed']++;
+                    $bySpecies[$speciesName]['completed']++;
+                    $byBarangay[$barangayName]['completed']++;
+                } elseif ($transaction->status == 0) {
+                    $byVaccine[$vaccineName]['pending']++;
+                    $bySpecies[$speciesName]['pending']++;
+                    $byBarangay[$barangayName]['pending']++;
+                }
+            }
+
             $summary = [
-                'total' => $vaccinations->count(),
-                'completed' => $vaccinations->where('status', 1)->count(),
-                'pending' => $vaccinations->where('status', 0)->count(),
-                'cancelled' => $vaccinations->where('status', 2)->count(),
-                'byVaccine' => $vaccinations->groupBy('vaccine.vaccine_name')->map(function ($group) {
-                    return [
-                        'count' => $group->count(),
-                        'completed' => $group->where('status', 1)->count(),
-                        'pending' => $group->where('status', 0)->count(),
-                        'cancelled' => $group->where('status', 2)->count(),
-                    ];
-                }),
-                'bySpecies' => $vaccinations->groupBy('animal.species.name')->map(function ($group) {
-                    return [
-                        'count' => $group->count(),
-                        'completed' => $group->where('status', 1)->count(),
-                        'pending' => $group->where('status', 0)->count(),
-                        'cancelled' => $group->where('status', 2)->count(),
-                    ];
-                }),
+                'total' => $transactions->count(),
+                'completed' => $transactions->where('status', 1)->count(),
+                'pending' => $transactions->where('status', 0)->count(),
+                'byVaccine' => $byVaccine,
+                'bySpecies' => $bySpecies,
+                'byBarangay' => $byBarangay // Added barangay summary
             ];
 
-            // Prepare data for PDF
+            // Prepare view data
             $data = [
                 'vaccinations' => $vaccinations,
                 'dateFrom' => $dateFrom,
                 'dateTo' => $dateTo,
                 'summary' => $summary,
+                'barangay_name' => $barangay_name
             ];
 
-            // PDF generation
-            $fileName = "vaccinations-report-" . now()->format('Y-m-d-His') . '.pdf';
-            $filePath = "reports/{$fileName}";
-
+            // Generate PDF
             $pdf = PDF::loadView('reports.pdf.receptionist.vaccinations', $data);
+            
+            // Set paper size and orientation
+            $pdf->setPaper('a4', 'portrait');
 
-            if (!Storage::disk('public')->put($filePath, $pdf->output())) {
-                throw new \Exception('Failed to save the PDF file.');
-            }
+            // Generate filename
+            $fileName = 'vaccination_report_' . now()->format('Y-m-d_His') . '.pdf';
+            $filePath = 'reports/' . $fileName;
 
-            // Create report entry
+            // Save to storage
+            Storage::disk('public')->put($filePath, $pdf->output());
+
+            // Get current user ID
+            $userId = auth()->id();
+
+            // Create report record
             $report = Report::create([
-                'user_id' => auth()->user()->user_id,
+                'user_id' => $userId,
                 'report_type' => 'vaccinations',
-                'date_from' => $dateFrom->toDateString(),
-                'date_to' => $dateTo->toDateString(),
-                'parameters' => $request->only(['vaccine_id', 'species_id', 'status']),
-                'generated_by' => auth()->user()->user_id,
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'parameters' => json_encode([
+                    'vaccine_id' => $request->vaccine_id,
+                    'species_id' => $request->species_id,
+                    'status' => $request->status,
+                    'barangay_id' => $request->barangay_id
+                ]),
+                'file_path' => $filePath,
                 'status' => 'completed',
-                'file_path' => $filePath
+                'generated_by' => $userId
             ]);
 
+            // Redirect to download route
             return redirect()->route('reports.downloadfromRec', $report->id);
 
         } catch (\Exception $e) {
-            \Log::error('Vaccination Report generation failed: ' . $e->getMessage());
-            return back()->with('error', 'Failed to generate report: ' . $e->getMessage());
+            \Log::error('Vaccination Report Generation Error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate report: ' . $e->getMessage()
+            ], 500);
         }
     }
 }
