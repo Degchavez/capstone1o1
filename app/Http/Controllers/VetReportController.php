@@ -769,6 +769,15 @@ class VetReportController extends Controller
             $dateFrom = \Carbon\Carbon::parse($filters['date_from'] ?? now()->subYear());
             $dateTo = \Carbon\Carbon::parse($filters['date_to'] ?? now());
 
+            // Get barangay name if barangay_id is provided
+            $barangay_name = 'All Barangays';
+            if (!empty($filters['barangay_id'])) {
+                $barangay = \App\Models\Barangay::find($filters['barangay_id']);
+                if ($barangay) {
+                    $barangay_name = $barangay->barangay_name;
+                }
+            }
+
             $query = Animal::query()
                 ->with([
                     'owner.user.address.barangay',
@@ -787,7 +796,6 @@ class VetReportController extends Controller
                 $query->where('breed_id', $filters['breed_id']);
             }
 
-            // Modified vaccination status filter
             if (isset($filters['is_vaccinated'])) {
                 if ($filters['is_vaccinated'] === '') {
                     // Show all
@@ -810,6 +818,7 @@ class VetReportController extends Controller
                 'animals' => $animals,
                 'dateFrom' => $dateFrom,
                 'dateTo' => $dateTo,
+                'barangay_name' => $barangay_name,
                 'summary' => [
                     'total' => $animals->count(),
                     'vaccinated' => $animals->where('is_vaccinated', 1)->count(),
@@ -833,19 +842,11 @@ class VetReportController extends Controller
                     }),
                 ],
                 'samples' => $animals->take(5)->map(function ($animal) {
-                    $barangayName = null;
-                    if ($animal->owner && 
-                        $animal->owner->user && 
-                        $animal->owner->user->address && 
-                        $animal->owner->user->address->barangay) {
-                        $barangayName = $animal->owner->user->address->barangay->barangay_name;
-                    }
-
                     return [
                         'name' => $animal->name,
                         'species' => $animal->species->name ?? 'Unknown',
                         'breed' => $animal->breed->name ?? 'Unknown',
-                        'barangay' => $barangayName ?? 'Unknown',
+                        'barangay' => $animal->owner?->user?->address?->barangay?->barangay_name ?? 'Unknown',
                         'is_vaccinated' => $animal->is_vaccinated === null ? 'Not Required' : 
                                          ($animal->is_vaccinated ? 'Yes' : 'No'),
                     ];
