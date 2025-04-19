@@ -324,58 +324,96 @@ class VetReportController extends Controller
 
     private function previewAnimals(Request $request)
     {
-        $query = Animal::query()
-            ->with('species', 'breed', 'owner.user')
-            ->whereBetween('created_at', [
-                Carbon::parse($request->date_from)->startOfDay(),
-                Carbon::parse($request->date_to)->endOfDay()
+        try {
+            // Get filters matching the report generation method
+            $filters = $request->only([
+                'date_from',
+                'date_to',
+                'species_id',
+                'breed_id',
+                'is_vaccinated',
+                'barangay_id',
             ]);
 
-        if ($request->species_id) {
-            $query->where('species_id', $request->species_id);
-        }
+            // Build query with explicit eager loading - matching the report generation
+            $query = Animal::query()
+                ->with([
+                    'owner.user.address.barangay',
+                    'species:id,name',
+                    'breed:id,name'
+                ])
+                ->select('animals.*')
+                ->whereBetween('created_at', [
+                    Carbon::parse($request->date_from)->startOfDay(),
+                    Carbon::parse($request->date_to)->endOfDay()
+                ]);
 
-        if ($request->breed_id) {
-            $query->where('breed_id', $request->breed_id);
-        }
+            // Apply filters exactly as in generateAnimalReport
+            if (!empty($filters['species_id'])) {
+                $query->where('species_id', $filters['species_id']);
+            }
 
-        if ($request->is_vaccinated !== '' && $request->is_vaccinated !== null) {
-            $query->where('is_vaccinated', $request->is_vaccinated);
-        }
+            if (!empty($filters['breed_id'])) {
+                $query->where('breed_id', $filters['breed_id']);
+            }
 
-        // Clone query for counts
-        $totalQuery = clone $query;
-        $vaccinatedQuery = clone $query;
+            if (isset($filters['is_vaccinated'])) {
+                $query->where('is_vaccinated', $filters['is_vaccinated']);
+            }
 
-        // Get summary
-        $summary = [
-            'total' => $totalQuery->count(),
-            'vaccinated' => $vaccinatedQuery->where('is_vaccinated', 1)->count(),
-            'not_vaccinated' => $totalQuery->count() - $vaccinatedQuery->where('is_vaccinated', 1)->count(),
-            'by_species' => $query->get()->groupBy('species.name')
-                ->map(function ($item) {
-                    return count($item);
-                })
-        ];
+            // Apply barangay filter exactly as in generateAnimalReport
+            if (!empty($filters['barangay_id'])) {
+                $query->whereHas('owner.user.address', function ($q) use ($filters) {
+                    $q->where('barangay_id', $filters['barangay_id']);
+                });
+            }
 
-        // Get sample data
-        $samples = $query->latest()->take(5)
-            ->get()
-            ->map(function ($animal) {
+            // Execute query
+            $animals = $query->get();
+
+            // Prepare summary matching the report format
+            $summary = [
+                'total' => $animals->count(),
+                'vaccinated' => $animals->where('is_vaccinated', 1)->count(),
+                'not_vaccinated' => $animals->where('is_vaccinated', 0)->count(),
+                'by_species' => $animals->groupBy('species.name')
+                    ->map(function ($group) {
+                        return $group->count();
+                    })
+            ];
+
+            // Prepare samples matching the report format
+            $samples = $animals->take(5)->map(function ($animal) {
+                // Get barangay name with proper null checking
+                $barangayName = null;
+                if ($animal->owner && 
+                    $animal->owner->user && 
+                    $animal->owner->user->address && 
+                    $animal->owner->user->address->barangay) {
+                    $barangayName = $animal->owner->user->address->barangay->barangay_name;
+                }
+
                 return [
-                    'created_at' => $animal->created_at,
                     'name' => $animal->name,
-                    'species' => $animal->species->name,
-                    'breed' => $animal->breed->name,
-                    'owner' => $animal->owner->user->complete_name,
-                    'is_vaccinated' => $animal->is_vaccinated ? 'Yes' : 'No'
+                    'species' => $animal->species->name ?? 'Unknown',
+                    'breed' => $animal->breed->name ?? 'Unknown',
+                    'barangay' => $barangayName ?? 'Unknown',
+                    'is_vaccinated' => $animal->is_vaccinated ? 'Yes' : 'No',
+                    'created_at' => $animal->created_at
                 ];
             });
 
-        return response()->json([
-            'summary' => $summary,
-            'samples' => $samples
-        ]);
+            return response()->json([
+                'summary' => $summary,
+                'samples' => $samples
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Animal Preview failed: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Failed to generate preview: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     private function previewVaccinations(Request $request)
@@ -700,186 +738,216 @@ class VetReportController extends Controller
     }
     
     public function generateAnimalReport(Request $request)
-{
-    try {
-        // Only date_from and date_to are required
-        $filters = $request->only([
-            'date_from',
-            'date_to',
-            'species_id',
-            'breed_id',
-            'is_vaccinated',
-        ]);
+    {
+        try {
+            // Only date_from and date_to are required
+            $filters = $request->only([
+                'date_from',
+                'date_to',
+                'species_id',
+                'breed_id',
+                'is_vaccinated',
+                'barangay_id',
+            ]);
 
-        $dateFrom = \Carbon\Carbon::parse($filters['date_from'] ?? now()->subYear());
-        $dateTo = \Carbon\Carbon::parse($filters['date_to'] ?? now());
+            $dateFrom = \Carbon\Carbon::parse($filters['date_from'] ?? now()->subYear());
+            $dateTo = \Carbon\Carbon::parse($filters['date_to'] ?? now());
 
-        // Build query
-        $query = Animal::query()
-            ->with(['owner.user', 'species', 'breed'])
-            ->whereBetween('created_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()]);
+            // Build query with explicit eager loading
+            $query = Animal::query()
+                ->with([
+                    'owner.user.address.barangay',
+                    'species:id,name',
+                    'breed:id,name'
+                ])
+                ->select('animals.*')
+                ->whereBetween('created_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()]);
 
-        if (!empty($filters['species_id'])) {
-            $query->where('species_id', $filters['species_id']);
-        }
+            if (!empty($filters['species_id'])) {
+                $query->where('species_id', $filters['species_id']);
+            }
 
-        if (!empty($filters['breed_id'])) {
-            $query->where('breed_id', $filters['breed_id']);
-        }
+            if (!empty($filters['breed_id'])) {
+                $query->where('breed_id', $filters['breed_id']);
+            }
 
-        if (isset($filters['is_vaccinated'])) {
-            $query->where('is_vaccinated', $filters['is_vaccinated']);
-        }
+            if (isset($filters['is_vaccinated'])) {
+                $query->where('is_vaccinated', $filters['is_vaccinated']);
+            }
+            
+            if (!empty($filters['barangay_id'])) {
+                $query->whereHas('owner.user.address', function ($q) use ($filters) {
+                    $q->where('barangay_id', $filters['barangay_id']);
+                });
+            }
+            
+            $animals = $query->get();
 
-        $animals = $query->get();
+            $data = [
+                'animals' => $animals,
+                'dateFrom' => $dateFrom,
+                'dateTo' => $dateTo,
+                'summary' => [
+                    'total' => $animals->count(),
+                    'vaccinated' => $animals->where('is_vaccinated', 1)->count(),
+                    'nonVaccinated' => $animals->where('is_vaccinated', 0)->count(),
+                    'bySpecies' => $animals->groupBy('species.name')->map(function ($group) {
+                        return [
+                            'count' => $group->count(),
+                            'vaccinated' => $group->where('is_vaccinated', 1)->count(),
+                            'nonVaccinated' => $group->where('is_vaccinated', 0)->count(),
+                        ];
+                    }),
+                    'byBreed' => $animals->groupBy('breed.name')->map(function ($group) {
+                        return [
+                            'count' => $group->count(),
+                            'vaccinated' => $group->where('is_vaccinated', 1)->count(),
+                            'nonVaccinated' => $group->where('is_vaccinated', 0)->count(),
+                        ];
+                    }),
+                ],
+                'samples' => $animals->take(5)->map(function ($animal) {
+                    // Get barangay name with proper null checking
+                    $barangayName = null;
+                    if ($animal->owner && 
+                        $animal->owner->user && 
+                        $animal->owner->user->address && 
+                        $animal->owner->user->address->barangay) {
+                        $barangayName = $animal->owner->user->address->barangay->barangay_name;
+                    }
 
-        $data = [
-            'animals' => $animals,
-            'dateFrom' => $dateFrom,
-            'dateTo' => $dateTo,
-            'summary' => [
-                'total' => $animals->count(),
-                'vaccinated' => $animals->where('is_vaccinated', 1)->count(),
-                'nonVaccinated' => $animals->where('is_vaccinated', 0)->count(),
-                'bySpecies' => $animals->groupBy('species.name')->map(function ($group) {
                     return [
-                        'count' => $group->count(),
-                        'vaccinated' => $group->where('is_vaccinated', 1)->count(),
-                        'nonVaccinated' => $group->where('is_vaccinated', 0)->count(),
+                        'name' => $animal->name,
+                        'species' => $animal->species->name ?? 'Unknown',
+                        'breed' => $animal->breed->name ?? 'Unknown',
+                        'barangay' => $barangayName ?? 'Unknown',
+                        'is_vaccinated' => $animal->is_vaccinated ? 'Yes' : 'No',
                     ];
                 }),
-                'byBreed' => $animals->groupBy('breed.name')->map(function ($group) {
+            ];
+            
+            $fileName = 'animals_report_' . now()->format('Y_m_d_H_i_s') . '.pdf';
+            $filePath = 'reports/' . $fileName;
+
+            $pdf = PDF::loadView('reports.pdf.receptionist.animals', $data);
+
+            if (!Storage::disk('public')->put($filePath, $pdf->output())) {
+                throw new \Exception('Failed to save the PDF file.');
+            }
+
+            $report = Report::create([
+                'user_id' => auth()->user()->user_id,
+                'report_type' => 'animals',
+                'date_from' => $dateFrom->toDateString(),
+                'date_to' => $dateTo->toDateString(),
+                'parameters' => $filters,
+                'generated_by' => auth()->user()->user_id,
+                'status' => 'completed',
+                'file_path' => $filePath
+            ]);
+
+            return redirect()->route('reports.downloadfromRec', $report->id);
+
+        } catch (\Exception $e) {
+            \Log::error('Animal Report generation failed: ' . $e->getMessage());
+            return back()->with('error', 'Failed to generate report: ' . $e->getMessage());
+        }
+    }
+
+    public function generateVaccinationReport(Request $request)
+    {
+        try {
+            // Get date range or use defaults
+            $dateFrom = $request->filled('date_from') 
+                ? \Carbon\Carbon::parse($request->date_from)->startOfDay()
+                : now()->subYear()->startOfDay();
+
+            $dateTo = $request->filled('date_to') 
+                ? \Carbon\Carbon::parse($request->date_to)->endOfDay()
+                : now()->endOfDay();
+
+            // Start base query
+            $query = Transaction::query()
+                ->with(['owner.user', 'animal.species', 'animal.breed', 'vaccine', 'vet', 'receptionist'])
+                ->whereBetween('created_at', [$dateFrom, $dateTo]);
+
+            // Optional filters (apply only if present)
+            if ($request->filled('vaccine_id')) {
+                $query->where('vaccine_id', $request->vaccine_id);
+            }
+
+            if ($request->filled('species_id')) {
+                $query->whereHas('animal', function($q) use ($request) {
+                    $q->where('species_id', $request->species_id);
+                });
+            }
+
+            if ($request->has('status') && $request->status !== '') {
+                $query->where('status', $request->status);
+            }
+
+            // Fetch results
+            $vaccinations = $query->get();
+
+            // Summary preparation
+            $summary = [
+                'total' => $vaccinations->count(),
+                'completed' => $vaccinations->where('status', 1)->count(),
+                'pending' => $vaccinations->where('status', 0)->count(),
+                'cancelled' => $vaccinations->where('status', 2)->count(),
+                'byVaccine' => $vaccinations->groupBy('vaccine.vaccine_name')->map(function ($group) {
                     return [
                         'count' => $group->count(),
-                        'vaccinated' => $group->where('is_vaccinated', 1)->count(),
-                        'nonVaccinated' => $group->where('is_vaccinated', 0)->count(),
+                        'completed' => $group->where('status', 1)->count(),
+                        'pending' => $group->where('status', 0)->count(),
+                        'cancelled' => $group->where('status', 2)->count(),
                     ];
                 }),
-            ]
-        ];
+                'bySpecies' => $vaccinations->groupBy('animal.species.name')->map(function ($group) {
+                    return [
+                        'count' => $group->count(),
+                        'completed' => $group->where('status', 1)->count(),
+                        'pending' => $group->where('status', 0)->count(),
+                        'cancelled' => $group->where('status', 2)->count(),
+                    ];
+                }),
+            ];
 
-        $fileName = 'animals_report_' . now()->format('Y_m_d_H_i_s') . '.pdf';
-        $filePath = 'reports/' . $fileName;
+            // Prepare data for PDF
+            $data = [
+                'vaccinations' => $vaccinations,
+                'dateFrom' => $dateFrom,
+                'dateTo' => $dateTo,
+                'summary' => $summary,
+            ];
 
-        $pdf = PDF::loadView('reports.pdf.receptionist.animals', $data);
+            // PDF generation
+            $fileName = "vaccinations-report-" . now()->format('Y-m-d-His') . '.pdf';
+            $filePath = "reports/{$fileName}";
 
-        if (!Storage::disk('public')->put($filePath, $pdf->output())) {
-            throw new \Exception('Failed to save the PDF file.');
+            $pdf = PDF::loadView('reports.pdf.receptionist.vaccinations', $data);
+
+            if (!Storage::disk('public')->put($filePath, $pdf->output())) {
+                throw new \Exception('Failed to save the PDF file.');
+            }
+
+            // Create report entry
+            $report = Report::create([
+                'user_id' => auth()->user()->user_id,
+                'report_type' => 'vaccinations',
+                'date_from' => $dateFrom->toDateString(),
+                'date_to' => $dateTo->toDateString(),
+                'parameters' => $request->only(['vaccine_id', 'species_id', 'status']),
+                'generated_by' => auth()->user()->user_id,
+                'status' => 'completed',
+                'file_path' => $filePath
+            ]);
+
+            return redirect()->route('reports.downloadfromRec', $report->id);
+
+        } catch (\Exception $e) {
+            \Log::error('Vaccination Report generation failed: ' . $e->getMessage());
+            return back()->with('error', 'Failed to generate report: ' . $e->getMessage());
         }
-
-        $report = Report::create([
-            'user_id' => auth()->user()->user_id,
-            'report_type' => 'animals',
-            'date_from' => $dateFrom->toDateString(),
-            'date_to' => $dateTo->toDateString(),
-            'parameters' => $filters,
-            'generated_by' => auth()->user()->user_id,
-            'status' => 'completed',
-            'file_path' => $filePath
-        ]);
-
-        return redirect()->route('reports.downloadfromRec', $report->id);
-
-    } catch (\Exception $e) {
-        \Log::error('Animal Report generation failed: ' . $e->getMessage());
-        return back()->with('error', 'Failed to generate report: ' . $e->getMessage());
     }
-}
-
-public function generateVaccinationReport(Request $request)
-{
-    try {
-        // Get date range or use defaults
-        $dateFrom = $request->filled('date_from') 
-            ? \Carbon\Carbon::parse($request->date_from)->startOfDay()
-            : now()->subYear()->startOfDay();
-
-        $dateTo = $request->filled('date_to') 
-            ? \Carbon\Carbon::parse($request->date_to)->endOfDay()
-            : now()->endOfDay();
-
-        // Start base query
-        $query = Transaction::query()
-            ->with(['owner.user', 'animal.species', 'animal.breed', 'vaccine', 'vet', 'receptionist'])
-            ->whereBetween('created_at', [$dateFrom, $dateTo]);
-
-        // Optional filters (apply only if present)
-        if ($request->filled('vaccine_id')) {
-            $query->where('vaccine_id', $request->vaccine_id);
-        }
-
-        if ($request->filled('species_id')) {
-            $query->whereHas('animal', function($q) use ($request) {
-                $q->where('species_id', $request->species_id);
-            });
-        }
-
-        if ($request->has('status') && $request->status !== '') {
-            $query->where('status', $request->status);
-        }
-
-        // Fetch results
-        $vaccinations = $query->get();
-
-        // Summary preparation
-        $summary = [
-            'total' => $vaccinations->count(),
-            'completed' => $vaccinations->where('status', 1)->count(),
-            'pending' => $vaccinations->where('status', 0)->count(),
-            'cancelled' => $vaccinations->where('status', 2)->count(),
-            'byVaccine' => $vaccinations->groupBy('vaccine.vaccine_name')->map(function ($group) {
-                return [
-                    'count' => $group->count(),
-                    'completed' => $group->where('status', 1)->count(),
-                    'pending' => $group->where('status', 0)->count(),
-                    'cancelled' => $group->where('status', 2)->count(),
-                ];
-            }),
-            'bySpecies' => $vaccinations->groupBy('animal.species.name')->map(function ($group) {
-                return [
-                    'count' => $group->count(),
-                    'completed' => $group->where('status', 1)->count(),
-                    'pending' => $group->where('status', 0)->count(),
-                    'cancelled' => $group->where('status', 2)->count(),
-                ];
-            }),
-        ];
-
-        // Prepare data for PDF
-        $data = [
-            'vaccinations' => $vaccinations,
-            'dateFrom' => $dateFrom,
-            'dateTo' => $dateTo,
-            'summary' => $summary,
-        ];
-
-        // PDF generation
-        $fileName = "vaccinations-report-" . now()->format('Y-m-d-His') . '.pdf';
-        $filePath = "reports/{$fileName}";
-
-        $pdf = PDF::loadView('reports.pdf.receptionist.vaccinations', $data);
-
-        if (!Storage::disk('public')->put($filePath, $pdf->output())) {
-            throw new \Exception('Failed to save the PDF file.');
-        }
-
-        // Create report entry
-        $report = Report::create([
-            'user_id' => auth()->user()->user_id,
-            'report_type' => 'vaccinations',
-            'date_from' => $dateFrom->toDateString(),
-            'date_to' => $dateTo->toDateString(),
-            'parameters' => $request->only(['vaccine_id', 'species_id', 'status']),
-            'generated_by' => auth()->user()->user_id,
-            'status' => 'completed',
-            'file_path' => $filePath
-        ]);
-
-        return redirect()->route('reports.downloadfromRec', $report->id);
-
-    } catch (\Exception $e) {
-        \Log::error('Vaccination Report generation failed: ' . $e->getMessage());
-        return back()->with('error', 'Failed to generate report: ' . $e->getMessage());
-    }
-}
 }

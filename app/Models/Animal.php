@@ -39,6 +39,14 @@ public function owner()
     return $this->belongsTo(Owner::class, 'owner_id', 'owner_id');
 }
 
+public function getBarangayNameAttribute()
+{
+    return optional($this->owner->user->address->barangay)->barangay_name;
+}
+
+public function barangay() {
+    return $this->owner->user->address->barangay ?? null;
+}
     // Relationship with the Species model
     public function species()
     {

@@ -358,6 +358,18 @@
                                     <option value="0">Not Vaccinated</option>
                                 </select>
                             </div>
+                            <div class="form-group">
+                                <label for="barangay_id" class="block text-sm font-medium text-gray-700">Barangay</label>
+                                <select name="barangay_id" id="barangay_id" 
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <option value="">-- All Barangays --</option>
+                                    @foreach($barangays as $barangay)
+                                        <option value="{{ $barangay->id }}" {{ request('barangay_id') == $barangay->id ? 'selected' : '' }}>
+                                            {{ $barangay->barangay_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
                             
                             <button type="submit" 
                                 class="w-full bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
@@ -381,20 +393,25 @@
                                 </p>
                             </div>
 
-                            <!-- Preview Filters -->
-                            <div class="mb-4">
-                                <h4 class="text-sm font-semibold text-gray-700 mb-2">Applied Filters</h4>
-                                <div class="space-y-1">
-                                    <p id="animals-preview-species" class="text-sm text-gray-600">
-                                        Species: All Species
-                                    </p>
-                                    <p id="animals-preview-breed" class="text-sm text-gray-600">
-                                        Breed: All Breeds
-                                    </p>
-                                    <p id="animals-preview-vaccinated" class="text-sm text-gray-600">
-                                        Vaccination: All
-                                    </p>
-                                </div>
+                        <!-- Preview Filters -->
+                    <div class="mb-4">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-2">Applied Filters</h4>
+                        <div class="space-y-1">
+                            <p id="animals-preview-species" class="text-sm text-gray-600">
+                                Species: All Species
+                            </p>
+                            <p id="animals-preview-breed" class="text-sm text-gray-600">
+                                Breed: All Breeds
+                            </p>
+                            <p id="animals-preview-vaccinated" class="text-sm text-gray-600">
+                                Vaccination: All
+                            </p>
+                            <p id="animals-preview-barangay" class="text-sm text-gray-600">
+                                Barangay: All Barangays
+                            </p>
+                        </div>
+                    </div>
+
                             </div>
 
                             <!-- Loading Indicator -->
@@ -437,6 +454,7 @@
                                                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Name</th>
                                                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Species</th>
                                                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Breed</th>
+                                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Barangay</th>
                                                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-500">Vaccinated</th>
                                             </tr>
                                         </thead>
@@ -1060,6 +1078,8 @@ function initializeReportEngine() {
         const speciesSelect = form.querySelector('select[name="species_id"]');
         const breedSelect = form.querySelector('select[name="breed_id"]');
         const vaccinatedSelect = form.querySelector('select[name="is_vaccinated"]');
+        const barangaySelect = form.querySelector('select[name="barangay_id"]');
+
         
         document.getElementById('animals-preview-species').textContent = 
             `Species: ${speciesSelect.options[speciesSelect.selectedIndex].text}`;
@@ -1067,6 +1087,8 @@ function initializeReportEngine() {
             `Breed: ${breedSelect && breedSelect.value ? breedSelect.options[breedSelect.selectedIndex].text : 'All Breeds'}`;
         document.getElementById('animals-preview-vaccinated').textContent = 
             `Vaccination: ${vaccinatedSelect.options[vaccinatedSelect.selectedIndex].text}`;
+            document.getElementById('animals-preview-barangay').textContent = 
+            `Barangay: ${barangaySelect && barangaySelect.value ? barangaySelect.options[barangaySelect.selectedIndex].text : 'All Barangays'}`;
 
         // Update summary statistics
         document.getElementById('animals-preview-total').textContent = data.summary.total;
@@ -1081,6 +1103,8 @@ function initializeReportEngine() {
                     <td class="px-3 py-2">${animal.name}</td>
                     <td class="px-3 py-2">${animal.species}</td>
                     <td class="px-3 py-2">${animal.breed}</td>
+                    <td class="px-3 py-2">${animal.barangay ?? 'N/A'}</td>
+
                     <td class="px-3 py-2">${animal.is_vaccinated === 'Yes' 
                         ? '<span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">Yes</span>' 
                         : '<span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">No</span>'}</td>

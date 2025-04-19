@@ -37,7 +37,12 @@ Route::get('/', function () {
     return view('welcome', compact('veterinarians'));
 });
 
+//Generate ID
+
 Route::get('/animal-id/{animal_id}', [AnimalController::class, 'showID'])->name('animal.id');
+
+Route::get('/animal/{animal_id}/id/pdf', [AnimalController::class, 'downloadIDPdf'])->name('animal.id.pdf');
+
 
 Route::middleware(['auth'])->get('/dashboard', function () {
     if (auth()->user()->role == 0) {

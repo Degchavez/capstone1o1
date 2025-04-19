@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log; // ✅ ADD THIS LINE
 use Illuminate\Support\Facades\Storage; // Add this line
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
-
+use Barryvdh\DomPDF\Facade\Pdf;
 
 
 
@@ -40,6 +40,27 @@ class AnimalController extends Controller
 
         return view('admin.animal_id', compact('animal', 'qrCode'));
     }
+
+    public function downloadIDPdf($animal_id)
+{
+    $animal = Animal::with([
+        'owner.user',
+        'species',
+        'breed'
+    ])->where('animal_id', $animal_id)->first();
+
+    if (!$animal) {
+        abort(404);
+    }
+
+    // Generate QR code HTML
+    $qrCode = QrCode::size(100)->generate(route('animal.id', $animal_id));
+
+    // Load the same Blade view used for showing the ID
+    $pdf = Pdf::loadView('admin.pdf_id', compact('animal', 'qrCode'))->setPaper('a4', 'portrait');
+
+    return $pdf->download('animal-id-' . $animal->animal_id . '.pdf');
+}
 
     public function showProfile($animal_id)
     {

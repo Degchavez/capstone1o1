@@ -11,12 +11,12 @@
           
                 <!-- Direct Download Buttons -->
                 <div class="flex gap-2">
-                    <button onclick="showDownloadMessage('PDF')" class="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0v12h8V4H6z" clip-rule="evenodd"/>
-                        </svg>
-                        PDF
-                    </button>
+                    <a href="{{ route('animal.id.pdf', $animal->animal_id) }}" 
+                        class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                        <!-- your SVG -->
+                        Download PDF
+                     </a>
+                     
                     <button onclick="showDownloadMessage('PNG')" class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center">
                         <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
@@ -190,13 +190,6 @@
                             {{ strtoupper($animal->animal_id) }}
                         </p>
                     </div>
-                </div>
-                
-                <!-- Resize handle -->
-                <div id="resize-handle" class="absolute bottom-0 right-0 cursor-se-resize w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded-tl flex items-center justify-center">
-                    <svg class="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M22 22H16V16H22V22ZM22 15H15V8H22V15ZM15 22H8V15H15V22ZM8 8H15V1H8V8ZM7 15H1V8H7V15ZM7 22H1V16H7V22ZM7 7H1V1H7V7ZM16 7H8V1H16V7Z" />
-                    </svg>
                 </div>
                 
                 <!-- Size indicator popup that appears when resizing -->

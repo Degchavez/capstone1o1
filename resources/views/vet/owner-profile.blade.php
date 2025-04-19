@@ -249,7 +249,13 @@
                                                 class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md transition-all duration-200 ease-in-out hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
                                             <span class="text-sm">See Transaction Details</span>
                                         </button>
-                                
+                                    @else ($transaction->status == 1)
+                                    <!-- If status is 'Completed', show a button to view transaction details -->
+                                    <button type="button"
+                                            onclick="openTransactionModal('{{ $transaction->transaction_id }}')"
+                                            class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md transition-all duration-200 ease-in-out hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
+                                        <span class="text-sm">See Transaction Details</span>
+                                    </button>
                 
                                     @endif
                                 </div>

@@ -29,17 +29,17 @@
         .office-title {
             font-size: 24px;
             font-weight: bold;
-            color: #1d4ed8;
+            color: #333;
             margin: 10px 0 5px;
         }
         .office-subtitle {
             font-size: 16px;
-            color: #666;
+            color: #333;
             margin-bottom: 20px;
         }
         .transaction-number {
             font-size: 18px;
-            color: #1d4ed8;
+            color: #333;
             font-weight: bold;
             padding: 10px;
             background: #f3f4f6;
@@ -56,7 +56,7 @@
         .section-title { 
             font-weight: bold;
             margin-bottom: 15px;
-            color: #1d4ed8;
+            color: #333;
             font-size: 18px;
             border-bottom: 2px solid #e5e7eb;
             padding-bottom: 8px;
@@ -74,12 +74,12 @@
         }
         .label { 
             font-weight: bold;
-            color: #4b5563;
+            color: #333;
             min-width: 120px;
             display: inline-block;
         }
         .value {
-            color: #111827;
+            color: #333;
         }
         .status-badge {
             padding: 5px 10px;
@@ -94,17 +94,13 @@
             text-align: center;
             margin-top: 40px;
             font-size: 12px;
-            color: #6b7280;
+            color: #333;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="logo-container">
-            <img src="{{ public_path('assets/1.jpg') }}" alt="Logo" class="logo">
-        </div>
-        <div class="office-title">City Veterinarians Office of Valencia</div>
-        <div class="office-subtitle">Official Transaction Record</div>
+ 
         <div class="transaction-number">Transaction #{{ $transaction->transaction_id }}</div>
     </div>
 

@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="bg-gray-50 min-h-screen">
+    <div class=" min-h-screen">
         <!-- Top Navigation Bar -->
         <nav class="bg-white border-b border-gray-200">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
