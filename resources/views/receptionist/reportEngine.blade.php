@@ -93,17 +93,6 @@
                                     <option value="2">Cancelled</option>
                                 </select>
                             </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Barangay</label>
-                                <select name="barangay_id" 
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                    <option value="">All Barangays</option>
-                                    @foreach($barangays as $barangay)
-                                        <option value="{{ $barangay->id }}">{{ $barangay->barangay_name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
                             
                             <button type="submit" 
                                 class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
@@ -140,9 +129,7 @@
                                     <p id="transactions-preview-status" class="text-sm text-gray-600">
                                         Status: All Statuses
                                     </p>
-                                    <p id="transactions-preview-barangay" class="text-sm text-gray-600">
-                                        Barangay: All Barangays
-                                    </p>
+                             
                                 </div>
                             </div>
 
