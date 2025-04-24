@@ -7,6 +7,7 @@
     <style>
         @page {
                     margin: 0.5cm 1cm;
+                    margin-bottom: 1.5cm; /* Add space for footer */
                 }
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -15,6 +16,7 @@
             line-height: 1.4;
             color: #2d3748;
             background-color: #fff;
+            margin-bottom: 60px; /* Space for footer */
         }
         .header {
             text-align: center;
@@ -92,6 +94,7 @@
             border-collapse: collapse;
             margin-bottom: 20px;
             font-size: 11px;
+            page-break-inside: auto;
         }
         th {
             background-color: #edf2f7;
@@ -122,14 +125,16 @@
         }
         .footer {
             position: fixed;
-            bottom: 20px;
+            bottom: 0;
             left: 0;
             right: 0;
             text-align: center;
             font-size: 10px;
             color: #7f8c8d;
+            background-color: white;
             border-top: 1px solid #ecf0f1;
-            padding-top: 10px;
+            padding: 10px 20px;
+            height: auto;
         }
         
         .count-circle {
@@ -203,60 +208,89 @@
             page-break-after: always;
         }
 
+        /* Update table container styles */
+        .table-container {
+            margin-bottom: 40px;
+            page-break-inside: auto;
+        }
+
+        /* Table styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 11px;
+            page-break-inside: auto;
+        }
+
+        /* Keep header with content */
+        thead {
+            display: table-header-group;
+        }
+
+        /* Prevent row splitting */
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
+        /* Summary section styles */
+        .summary-section {
+            page-break-before: always; /* Start on new page */
+            margin-bottom: 60px; /* Space for footer */
+        }
+
     </style>
 </head>
 <body>
-    <div class="header" style="display: block; text-align: center;">
-        <!-- Remove the outer flex container and create a completely new structure -->
-        <table style="width: 100%; border: none; border-collapse: collapse; margin: 0 auto;">
-            <tr>
-                <td style="width: 25%; text-align: right; vertical-align: middle; padding-right: 15px; border: none;">
-                    <img src="{{ public_path('assets/1.jpg') }}" alt="Logo" style="width: 100px; height: auto;">
-                </td>
-                <td style="width: 75%; text-align: left; vertical-align: middle; border: none;">
-                    <h1 style="margin: 0; font-size: 20px;">Owners Report</h1>
-                    <div style="font-size: 14px;">City Veterinarians Office of Valencia</div>
-                    <div style="font-size: 12px;">Official Owners Record</div>
-                    <p style="font-size: 10px; color: #718096;">Period: {{ $dateFrom->format('M d, Y') }} - {{ $dateTo->format('M d, Y') }}</p>
-                </td>
-            </tr>
-        </table>
-    </div>
+    <!-- Main content section -->
+    <div class="content-wrapper">
+        <!-- Header -->
+        <div class="header" style="display: block; text-align: center;">
+            <table style="width: 100%; border: none; border-collapse: collapse; margin: 0 auto;">
+                <tr>
+                    <td style="width: 25%; text-align: right; vertical-align: middle; padding-right: 15px; border: none;">
+                        <img src="{{ public_path('assets/1.jpg') }}" alt="Logo" style="width: 100px; height: auto;">
+                    </td>
+                    <td style="width: 75%; text-align: left; vertical-align: middle; border: none;">
+                        <h1 style="margin: 0; font-size: 20px;">Owners Report</h1>
+                        <div style="font-size: 14px;">City Veterinarians Office of Valencia</div>
+                        <div style="font-size: 12px;">Official Owners Record</div>
+                        <p style="font-size: 10px; color: #718096;">Period: {{ $dateFrom->format('M d, Y') }} - {{ $dateTo->format('M d, Y') }}</p>
+                    </td>
+                </tr>
+            </table>
+        </div>
         
-        <div class="section">
+        <!-- Owner List Section -->
+        <div class="section table-container">
             <div class="section-title" style="margin-bottom: 10px;">Owner List</div>
             <div class="report-info">
-                <p>Location: <b> {{ isset($barangay_name) ? $barangay_name : 'All Barangays' }} </b></p>
+                <p>Location: <b>{{ isset($barangay_name) ? $barangay_name : 'All Barangays' }}</b></p>
             </div>
-            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-                <thead style="background-color: #f7fafc;">
+            <table>
+                <thead>
                     <tr>
-                        <th style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left;">Owner Name</th>
-                        <th style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left;">Barangay</th>
-                        <th style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">Animals</th>
-                        <th style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">Transactions</th>
+                        <th>Owner Name</th>
+                        <th>Barangay</th>
+                        <th>Animals</th>
+                        <th>Transactions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($owners as $owner)
                         <tr>
-                            <td style="padding: 10px; border-bottom: 1px solid #edf2f7; font-weight: 500;">
-                                {{ $owner->user->complete_name }}
-                            </td>
-                            <td style="padding: 10px; border-bottom: 1px solid #edf2f7;">
-                                <span class="badge" style="background-color: #edf2f7; padding: 4px 8px; border-radius: 6px;">
+                            <td>{{ $owner->user->complete_name }}</td>
+                            <td>
+                                <span class="badge">
                                     {{ optional($owner->user->address)->barangay->barangay_name ?? 'No Barangay' }}
                                 </span>
                             </td>
-                            <td style="padding: 10px; border-bottom: 1px solid #edf2f7; text-align: center;">
-                                <span class="count-circle" style="background-color: #e0f2fe; color: #2d3748; padding: 5px 10px; border-radius: 999px;">
-                                    {{ $owner->animals->count() }}
-                                </span>
+                            <td style="text-align: center;">
+                                <span class="count-circle">{{ $owner->animals->count() }}</span>
                             </td>
-                            <td style="padding: 10px; border-bottom: 1px solid #edf2f7; text-align: center;">
-                                <span class="count-circle" style="background-color: #dcfce7; color: #2d3748; padding: 5px 10px; border-radius: 999px;">
-                                    {{ $owner->transactions->count() }}
-                                </span>
+                            <td style="text-align: center;">
+                                <span class="count-circle">{{ $owner->transactions->count() }}</span>
                             </td>
                         </tr>
                     @endforeach
@@ -264,50 +298,52 @@
             </table>
         </div>
 
-        <div class="footer">
-            <p>Generated by: {{ auth()->user()->complete_name }}</p>
-            <p style="font-size: 10px; color: #718096;">Generated on: {{ now()->format('F d, Y h:i A') }}</p> 
-            <p>Page {PAGE_NUM} of {PAGE_COUNT}</p>
-        </div>
-        <div class="page-break"></div>
-
-        <div class="section">
+        <!-- Summary Section -->
+        <div class="summary-section">
             <div class="section-title">Summary Statistics</div>
             <div class="stat-box">
                 <div class="stat-label">Total Owners</div>
-                <div class="stat-value" style="color: #2d3748;">
-                    {{ $summary['total'] }}
-                </div>
+                <div class="stat-value">{{ $summary['total'] }}</div>
             </div>
             
             <div class="section-title" style="margin-top: 10px;">Barangay Distribution</div>
             <div class="barangay-summary">
-                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-                    <thead style="background-color: #f7fafc; text-align: left;">
+                <table>
+                    <thead>
                         <tr>
-                            <th style="padding: 8px; border-bottom: 1px solid #e2e8f0;">Barangay</th>
-                            <th style="padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: center;">Owners</th>
-                            <th style="padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: center;">Animals</th>
-                            <th style="padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: center;">Transactions</th>
+                            <th>Barangay</th>
+                            <th style="text-align: center;">Owners</th>
+                            <th style="text-align: center;">Animals</th>
+                            <th style="text-align: center;">Transactions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($summary['byBarangay'] as $barangay => $data)
                             <tr>
-                                <td style="padding: 8px; border-bottom: 1px solid #edf2f7;">{{ $barangay }}</td>
-                                <td style="padding: 8px; text-align: center; border-bottom: 1px solid #edf2f7;">{{ $data['count'] }}</td>
-                                <td style="padding: 8px; text-align: center; border-bottom: 1px solid #edf2f7;">{{ $data['animalCount'] }}</td>
-                                <td style="padding: 8px; text-align: center; border-bottom: 1px solid #edf2f7;">{{ $data['transactionCount'] }}</td>
+                                <td>{{ $barangay }}</td>
+                                <td style="text-align: center;">{{ $data['count'] }}</td>
+                                <td style="text-align: center;">{{ $data['animalCount'] }}</td>
+                                <td style="text-align: center;">{{ $data['transactionCount'] }}</td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
             </div>
-        
-            <div class="footer">
-                <p>Generated by: {{ auth()->user()->complete_name }}</p>
-                <p style="font-size: 10px; color: #718096;">Generated on: {{ now()->format('F d, Y h:i A') }}</p> 
-                <p>Page {PAGE_NUM} of {PAGE_COUNT}</p>
-            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <table style="width: 100%; border: none;">
+            <tr>
+                <td style="border: none; text-align: left;">
+                    Generated by: {{ auth()->user()->complete_name }} | {{ now()->format('F d, Y h:i A') }}
+                </td>
+                <td style="border: none; text-align: right;">
+                    Page {PAGE_NUM} of {PAGE_COUNT}
+                </td>
+            </tr>
+        </table>
+    </div>
 </body>
 </html>

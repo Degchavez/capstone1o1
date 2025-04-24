@@ -6,6 +6,7 @@
     <style>
         @page {
             margin: 0.5cm 1cm;
+            margin-bottom: 1.5cm;
         }
         
         body {
@@ -15,6 +16,7 @@
             color: #333333;
             margin: 0;
             padding: 20px;
+            padding-bottom: 60px;
             background-color: #ffffff;
         }
         
@@ -73,11 +75,17 @@
             border-radius: 4px;
         }
         
+        .table-container {
+            margin-bottom: 70px;
+            page-break-inside: auto;
+        }
+        
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
             background-color: #ffffff;
+            page-break-inside: auto;
         }
         
         th {
@@ -158,14 +166,16 @@
         
         .footer {
             position: fixed;
-            bottom: 20px;
+            bottom: 0;
             left: 0;
             right: 0;
             text-align: center;
             font-size: 10px;
             color: #7f8c8d;
+            background-color: white;
             border-top: 1px solid #ecf0f1;
-            padding-top: 10px;
+            padding: 10px 20px;
+            height: auto;
         }
         
         .page-break {
@@ -189,140 +199,157 @@
             font-size: 14px;
             margin-top: 10px;
         }
+
+        .content-wrapper {
+            position: relative;
+            min-height: 100%;
+            padding-bottom: 60px;
+        }
+
+        .summary-section {
+            page-break-before: always;
+        }
+
+        .table-container {
+            margin-bottom: 40px;
+        }
     </style>
 </head>
 <body>
-    <div class="header" style="display: block; text-align: center;">
-        <!-- Remove the outer flex container and create a completely new structure -->
-        <table style="width: 100%; border: none; border-collapse: collapse; margin: 0 auto;">
+    <div class="content-wrapper">
+        <div class="header" style="display: block; text-align: center;">
+            <table style="width: 100%; border: none; border-collapse: collapse; margin: 0 auto;">
+                <tr>
+                    <td style="width: 25%; text-align: right; vertical-align: middle; padding-right: 15px; border: none;">
+                        <img src="{{ public_path('assets/1.jpg') }}" alt="Logo" style="width: 100px; height: auto;">
+                    </td>
+                    <td style="width: 75%; text-align: left; vertical-align: middle; border: none;">
+                        <h1 style="margin: 0; font-size: 20px;">Animal Report</h1>
+                        <div style="font-size: 14px;">City Veterinarians Office of Valencia</div>
+                        <div style="font-size: 12px;">Official Animal Record</div>
+                        <p style="font-size: 10px; color: #718096;">Period: {{ $dateFrom->format('M d, Y') }} - {{ $dateTo->format('M d, Y') }}</p>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="table-container">
+            <div class="section-title">Animal List</div>
+            <div class="report-info">
+                <p>Location: <b> {{ isset($barangay_name) ? $barangay_name : 'All Barangays' }} </b></p>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Animal Name</th>
+                        <th>Species</th>
+                        <th>Breed</th>
+                        <th>Owner</th>
+                        <th>Barangay</th>
+                        <th>Vaccination Status</th>
+                        <th>Date Registered</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($animals as $animal)
+                        <tr>
+                            <td><strong>{{ $animal->name }}</strong></td>
+                            <td>{{ $animal->species->name ?? 'N/A' }}</td>
+                            <td>{{ $animal->breed->name ?? 'N/A' }}</td>
+                            <td>{{ $animal->owner->user->complete_name ?? 'N/A' }}</td>
+                            <td>{{ $animal->owner->user->address->barangay->barangay_name ?? 'N/A' }}</td>
+                            <td>
+                                @if($animal->is_vaccinated === 1)
+                                    <span class="vaccination-status status-yes">Vaccinated</span>
+                                @elseif($animal->is_vaccinated === 0)
+                                    <span class="vaccination-status status-no">Not Vaccinated</span>
+                                @else
+                                    <span class="vaccination-status status-not-required">Not Required</span>
+                                @endif
+                            </td>
+                            <td>{{ \Carbon\Carbon::parse($animal->created_at)->format('M d, Y') }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="summary-section">
+        <div class="stats-header">
+            <h2>Summary Statistics</h2>
+            <div class="stats-date">
+                {{ $dateFrom->format('F d, Y') }} - {{ $dateTo->format('F d, Y') }}
+            </div>
+            <div class="report-info">
+                <p>Location: {{ isset($barangay_name) ? $barangay_name : 'All Barangays' }}</p>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="section-title">Species Breakdown</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Species</th>
+                        <th>Total</th>
+                        <th>Vaccinated</th>
+                        <th>Not Vaccinated</th>
+                        <th>Not Required</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($summary['bySpecies'] as $species => $data)
+                        <tr>
+                            <td><strong>{{ $species }}</strong></td>
+                            <td>{{ $data['count'] }}</td>
+                            <td>{{ $data['vaccinated'] }}</td>
+                            <td>{{ $data['nonVaccinated'] }}</td>
+                            <td>{{ $data['notRequired'] }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-container">
+            <div class="section-title">Breed Breakdown</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Breed</th>
+                        <th>Total</th>
+                        <th>Vaccinated</th>
+                        <th>Not Vaccinated</th>
+                        <th>Not Required</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($summary['byBreed'] as $breed => $data)
+                        <tr>
+                            <td><strong>{{ $breed }}</strong></td>
+                            <td>{{ $data['count'] }}</td>
+                            <td>{{ $data['vaccinated'] }}</td>
+                            <td>{{ $data['nonVaccinated'] }}</td>
+                            <td>{{ $data['notRequired'] }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="footer">
+        <table style="width: 100%; border: none;">
             <tr>
-                <td style="width: 25%; text-align: right; vertical-align: middle; padding-right: 15px; border: none;">
-                    <img src="{{ public_path('assets/1.jpg') }}" alt="Logo" style="width: 100px; height: auto;">
+                <td style="border: none; text-align: left;">
+                    Generated by: {{ auth()->user()->complete_name }} | {{ now()->format('F d, Y h:i A') }}
                 </td>
-                <td style="width: 75%; text-align: left; vertical-align: middle; border: none;">
-                    <h1 style="margin: 0; font-size: 20px;">Animal Report</h1>
-                    <div style="font-size: 14px;">City Veterinarians Office of Valencia</div>
-                    <div style="font-size: 12px;">Official Animal Record</div>
-                    <p style="font-size: 10px; color: #718096;">Period: {{ $dateFrom->format('M d, Y') }} - {{ $dateTo->format('M d, Y') }}</p>
+                <td style="border: none; text-align: right;">
+                    Page {PAGE_NUM} of {PAGE_COUNT}
                 </td>
             </tr>
         </table>
-    </div>
-
-    <div class="section-title">Animal List</div>
-    <div class="report-info">
-        <p>Location: <b> {{ isset($barangay_name) ? $barangay_name : 'All Barangays' }} </b></p>
-    </div>
-    <table>
-        <thead>
-            <tr>
-                <th>Animal Name</th>
-                <th>Species</th>
-                <th>Breed</th>
-                <th>Owner</th>
-                <th>Barangay</th>
-                <th>Vaccination Status</th>
-                <th>Date Registered</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($animals as $animal)
-                <tr>
-                    <td><strong>{{ $animal->name }}</strong></td>
-                    <td>{{ $animal->species->name ?? 'N/A' }}</td>
-                    <td>{{ $animal->breed->name ?? 'N/A' }}</td>
-                    <td>{{ $animal->owner->user->complete_name ?? 'N/A' }}</td>
-                    <td>{{ $animal->owner->user->address->barangay->barangay_name ?? 'N/A' }}</td>
-                    <td>
-                        @if($animal->is_vaccinated === 1)
-                            <span class="vaccination-status status-yes">Vaccinated</span>
-                        @elseif($animal->is_vaccinated === 0)
-                            <span class="vaccination-status status-no">Not Vaccinated</span>
-                        @else
-                            <span class="vaccination-status status-not-required">Not Required</span>
-                        @endif
-                    </td>
-                    <td>{{ \Carbon\Carbon::parse($animal->created_at)->format('M d, Y') }}</td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
-
-
-    <div class="footer">
-        <p>Generated by: {{ auth()->user()->complete_name }}</p>
-        <p style="font-size: 10px; color: #718096;">Generated on: {{ now()->format('F d, Y h:i A') }}</p> 
-        <p>Page {PAGE_NUM} of {PAGE_COUNT}</p>
-    </div>
-
-    <!-- Force page break before summary -->
-    <div class="page-break"></div>
-
-    <!-- Summary Statistics Page -->
-    <div class="stats-header">
-        <h2>Summary Statistics</h2>
-        <div class="stats-date">
-            {{ $dateFrom->format('F d, Y') }} - {{ $dateTo->format('F d, Y') }}
-        </div>
-        <div class="report-info">
-            <p>Location: {{ isset($barangay_name) ? $barangay_name : 'All Barangays' }}</p>
-        </div>
-    </div>
-
-    <!-- Add species breakdown -->
-    <div class="section-title">Species Breakdown</div>
-    <table>
-        <thead>
-            <tr>
-                <th>Species</th>
-                <th>Total</th>
-                <th>Vaccinated</th>
-                <th>Not Vaccinated</th>
-                <th>Not Required</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($summary['bySpecies'] as $species => $data)
-                <tr>
-                    <td><strong>{{ $species }}</strong></td>
-                    <td>{{ $data['count'] }}</td>
-                    <td>{{ $data['vaccinated'] }}</td>
-                    <td>{{ $data['nonVaccinated'] }}</td>
-                    <td>{{ $data['notRequired'] }}</td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
-
-    <!-- Add breed breakdown -->
-    <div class="section-title">Breed Breakdown</div>
-    <table>
-        <thead>
-            <tr>
-                <th>Breed</th>
-                <th>Total</th>
-                <th>Vaccinated</th>
-                <th>Not Vaccinated</th>
-                <th>Not Required</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($summary['byBreed'] as $breed => $data)
-                <tr>
-                    <td><strong>{{ $breed }}</strong></td>
-                    <td>{{ $data['count'] }}</td>
-                    <td>{{ $data['vaccinated'] }}</td>
-                    <td>{{ $data['nonVaccinated'] }}</td>
-                    <td>{{ $data['notRequired'] }}</td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
-
-    <div class="footer">
-        <p>Generated by: {{ auth()->user()->complete_name }}</p>
-        <p style="font-size: 10px; color: #718096;">Generated on: {{ now()->format('F d, Y h:i A') }}</p> 
-        <p>Page {PAGE_NUM} of {PAGE_COUNT}</p>
     </div>
 </body>
 </html>

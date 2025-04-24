@@ -13,6 +13,7 @@
             padding: 20px;
             font-size: 12px;
             line-height: 1.4;
+            margin-bottom: 60px;
         }
         .header {
             text-align: center;
@@ -130,23 +131,37 @@
         }
         .footer {
             position: fixed;
-            bottom: 20px;
+            bottom: 0;
             left: 0;
             right: 0;
             text-align: center;
             font-size: 10px;
             color: #7f8c8d;
+            background-color: white;
             border-top: 1px solid #ecf0f1;
-            padding-top: 10px;
+            padding: 10px 20px;
+            margin-top: 20px;
         }
-        .page-break {
-            page-break-after: always;
+        .table-container {
+            margin-bottom: 60px;
+        }
+        .table-wrapper {
+            page-break-inside: auto;
+        }
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+        thead {
+            display: table-header-group;
+        }
+        tfoot {
+            display: table-footer-group;
         }
     </style>
 </head>
 <body>
     <div class="header" style="display: block; text-align: center;">
-        <!-- Remove the outer flex container and create a completely new structure -->
         <table style="width: 100%; border: none; border-collapse: collapse; margin: 0 auto;">
             <tr>
                 <td style="width: 25%; text-align: right; vertical-align: middle; padding-right: 15px; border: none;">
@@ -163,65 +178,67 @@
     </div>
    
     @if($transactions->count() > 0)
-        <div class="section">
+        <div class="section table-wrapper">
             <div class="section-title">Transaction Details</div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date & Time</th>
-                        <th>Transaction Info</th>
-                        <th>Client & Animal</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($transactions as $transaction)
+            <div class="table-container">
+                <table>
+                    <thead>
                         <tr>
-                            <td>
-                                <div>{{ $transaction->created_at->format('M d, Y') }}</div>
-                                <div style="font-size: 10px; color: #6b7280;">
-                                    {{ $transaction->created_at->format('h:i A') }}
-                                </div>
-                            </td>
-                            <td>
-                                <div style="font-weight: bold;">
-                                    {{ $transaction->transactionType->type_name }}
-                                </div>
-                                @if($transaction->transactionSubtype)
-                                    <div class="subtype-text">
-                                        {{ $transaction->transactionSubtype->subtype_name }}
-                                    </div>
-                                @endif
-                            </td>
-                            <td>
-                                <div style="font-weight: bold;">
-                                    {{ $transaction->owner->user->complete_name }}
-                                </div>
-                                <div class="subtype-text">
-                                    {{ $transaction->animal->name }} 
-                                    ({{ $transaction->animal->species->name }}
-                                    @if($transaction->animal->breed)
-                                        - {{ $transaction->animal->breed->name }}
-                                    @endif)
-                                </div>
-                            </td>
-                            <td>
-                                <span class="status-badge status-{{ strtolower([
-                                    0 => 'pending',
-                                    1 => 'completed',
-                                    2 => 'cancelled'
-                                ][$transaction->status]) }}">
-                                    {{ [
-                                        0 => 'Pending',
-                                        1 => 'Completed',
-                                        2 => 'Cancelled'
-                                    ][$transaction->status] }}
-                                </span>
-                            </td>
+                            <th>Date & Time</th>
+                            <th>Transaction Info</th>
+                            <th>Client & Animal</th>
+                            <th>Status</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach($transactions as $transaction)
+                            <tr>
+                                <td>
+                                    <div>{{ $transaction->created_at->format('M d, Y') }}</div>
+                                    <div style="font-size: 10px; color: #6b7280;">
+                                        {{ $transaction->created_at->format('h:i A') }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="font-weight: bold;">
+                                        {{ $transaction->transactionType->type_name }}
+                                    </div>
+                                    @if($transaction->transactionSubtype)
+                                        <div class="subtype-text">
+                                            {{ $transaction->transactionSubtype->subtype_name }}
+                                        </div>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div style="font-weight: bold;">
+                                        {{ $transaction->owner->user->complete_name }}
+                                    </div>
+                                    <div class="subtype-text">
+                                        {{ $transaction->animal->name }} 
+                                        ({{ $transaction->animal->species->name }}
+                                        @if($transaction->animal->breed)
+                                            - {{ $transaction->animal->breed->name }}
+                                        @endif)
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-{{ strtolower([
+                                        0 => 'pending',
+                                        1 => 'completed',
+                                        2 => 'cancelled'
+                                    ][$transaction->status]) }}">
+                                        {{ [
+                                            0 => 'Pending',
+                                            1 => 'Completed',
+                                            2 => 'Cancelled'
+                                        ][$transaction->status] }}
+                                    </span>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
     @else
         <div class="section" style="text-align: center; color: #718096;">
@@ -230,26 +247,32 @@
     @endif
 
     <div class="footer">
-        <p>Generated by: {{ auth()->user()->complete_name }}</p>
-        <p style="font-size: 10px; color: #718096;">Generated on: {{ now()->format('F d, Y h:i A') }}</p> 
-        <p>Page {PAGE_NUM} of {PAGE_COUNT}</p>
+        <table style="width: 100%; border: none;">
+            <tr>
+                <td style="border: none; text-align: left;">
+                    Generated by: {{ auth()->user()->complete_name }} | {{ now()->format('F d, Y h:i A') }}
+                </td>
+                <td style="border: none; text-align: right;">
+                    Page {PAGE_NUM} of {PAGE_COUNT}
+                </td>
+            </tr>
+        </table>
     </div>
 
-    <!-- Force page break before summary -->
     <div class="page-break"></div>
 
-    <div class="summary-section">
+    <div class="summary-section" style="margin-bottom: 60px;">
         <div class="section-title">Summary Statistics</div>
         <div class="stat-box">
             <div class="stat-label">Completed</div>
             <div class="stat-value" style="color: #059669;">
-                {{ $summary['byStatus'][1] ?? 0 }} <!-- 1 is for completed, fallback to 0 if not set -->
+                {{ $summary['byStatus'][1] ?? 0 }}
             </div>
         </div>
         <div class="stat-box">
             <div class="stat-label">Pending</div>
             <div class="stat-value" style="color: #d97706;">
-                {{ $summary['byStatus'][0] ?? 0 }} <!-- 0 is for pending, fallback to 0 if not set -->
+                {{ $summary['byStatus'][0] ?? 0 }}
             </div>
         </div>
         
@@ -263,9 +286,16 @@
     @endif
 
     <div class="footer">
-        <p>Generated by: {{ auth()->user()->complete_name }}</p>
-        <p style="font-size: 10px; color: #718096;">Generated on: {{ now()->format('F d, Y h:i A') }}</p> 
-        <p>Page {PAGE_NUM} of {PAGE_COUNT}</p>
+        <table style="width: 100%; border: none;">
+            <tr>
+                <td style="border: none; text-align: left;">
+                    Generated by: {{ auth()->user()->complete_name }} | {{ now()->format('F d, Y h:i A') }}
+                </td>
+                <td style="border: none; text-align: right;">
+                    Page {PAGE_NUM} of {PAGE_COUNT}
+                </td>
+            </tr>
+        </table>
     </div>
 </body>
 </html> 
