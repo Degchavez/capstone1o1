@@ -145,8 +145,8 @@
                                     <!-- Owner Information -->
                                     <td class="px-6 py-4">
                                         <div class="text-sm">
-                                            <a href="{{ route('rec.profile-owner', $owner->owner_id) }}" 
-                                               class="font-medium text-indigo-600 hover:text-indigo-900 hover:underline">{{ $animal->owner->user->complete_name }}</a>
+                                            <a href="{{ route('rec.profile-owner', ['owner_id' => $animal->owner->owner_id]) }}" 
+                                                class="font-medium text-indigo-600 hover:text-indigo-900 hover:underline">{{ $animal->owner->user->complete_name }}</a>
                                             <div class="text-gray-500">{{ $animal->owner->user->contact_no }}</div>
                                         </div>
                                     </td>
