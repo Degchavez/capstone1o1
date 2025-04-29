@@ -199,7 +199,7 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <div class="flex space-x-2">
-                                                <a href="{{ route('owner.editAnimal', ['owner_id' => $owner->owner_id, 'animal_id' => $animal->animal_id]) }}"
+                                                <a href="{{ route('rec.editAnimal', ['owner_id' => $owner->owner_id, 'animal_id' => $animal->animal_id]) }}"
                                                    class="text-blue-600 hover:text-blue-900">Edit</a>
                                               
                                             </div>
