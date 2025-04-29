@@ -104,7 +104,7 @@
                 <div class="p-6 border-b border-gray-100">
                     <div class="flex justify-between items-center">
                         <h2 class="text-xl font-semibold text-gray-900">Registered Animals</h2>
-                        <a href="{{ route('owner.addAnimalForm', ['owner_id' => $owner->owner_id]) }}"
+                        <a href="{{ route('owner.createAnimalForm', ['owner_id' => $owner->owner_id]) }}"
                            class="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all text-sm font-medium">
                             <i class="fas fa-plus mr-2"></i>
                             Add Animal
@@ -194,7 +194,7 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <div class="flex space-x-2">
-                                                <a href="{{ route('owner.editAnimal', ['owner_id' => $owner->owner_id, 'animal_id' => $animal->animal_id]) }}"
+                                                <a href="{{ route('owner.NeweditAnimal', ['owner_id' => $owner->owner_id, 'animal_id' => $animal->animal_id]) }}"
                                                    class="text-blue-600 hover:text-blue-900">Edit</a>
                                               
                                             </div>
