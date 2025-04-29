@@ -134,7 +134,7 @@ new #[Layout('layouts.guest')] class extends Component
             <!-- Logo and Header -->
             <div class="text-center mb-8">
                 <a href="/" class="inline-block">
-                    <img class="h-24 w-auto mx-auto" src="{{ asset('assets/1.jpg') }}" alt="Veterinary Office Logo">
+                    <img class="h-24 w-auto mx-auto" src="{{ asset('assets/logo2.png') }}" alt="Veterinary Office Logo">
                 </a>
                 <h2 class="mt-6 text-3xl font-bold text-gray-900">
                     Create your account

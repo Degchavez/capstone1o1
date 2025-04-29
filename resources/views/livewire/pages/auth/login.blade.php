@@ -46,7 +46,7 @@ new #[Layout('layouts.guest')] class extends Component
             <!-- The login form content -->
             <div class="text-center mb-8">
                 <a href="/">
-                    <img class="h-24 w-auto mx-auto hover:scale-105 transition-transform duration-400" src="{{ asset('assets/1.jpg') }}" alt="Your Logo">
+                    <img class="h-24 w-auto mx-auto hover:scale-105 transition-transform duration-400" src="{{ asset('assets/logo2.png') }}" alt="Your Logo">
                 </a>
             </div>
 

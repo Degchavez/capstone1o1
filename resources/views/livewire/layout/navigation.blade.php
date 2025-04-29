@@ -37,7 +37,7 @@ new class extends Component
                                             : route('dashboard'))))) 
                             : route('login') }}"
                        class="transform hover:scale-105 transition-all duration-300">
-                        <img src="{{ asset('assets/1.jpg') }}" alt="Application Logo" class="h-12 w-auto rounded-lg shadow-sm" />
+                        <img src="{{ asset('assets/logo2.png') }}" alt="Application Logo" class="h-12 w-auto rounded-lg shadow-sm" />
                     </a>
                 </div>
 
